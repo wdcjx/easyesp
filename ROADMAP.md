@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿）六份文档与坑清单 #36–81，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿）六份文档与坑清单 #36–81，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -50,6 +50,14 @@
 | 电机控制与 CAN（FOC 轮腿范式） | `references/motor-control-foc.md` | 源自 Skythinker foc-wheel-legged-robot（GPL-3.0，**已上板运行**）：TWAI 最小闭环+bus-off 补丁/电压环协议/LQR 实时 K 部署流/VMC 雅可比转置/BLE 遥控载具/分级失控保护 |
 | 坑清单电机控制类 72–81 | `references/known-pitfalls.md` | CAN bus-off 静默/BLE 断连末指令/零偏硬编码/量程档不符/保护死等/跨任务无锁/低压假值/延迟叠加/调试帧裸写 RAM/上电黑窗，共 10 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（FOC/电机控制/CAN/TWAI/LQR/VMC/平衡车/轮腿/MPU6050）、计数 71→81、README 17 份 |
+
+## 已沉淀（第六轮：量产避坑手册提炼）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| 量产工程纪律 | `references/production-readiness.md` | 源自用户提供的《ESP32 软件开发避坑手册（量产级）》docx 转写提炼（文档沉淀，未上板）：内存泄漏与碎片/栈水位/弱网限流/OTA 量产铁律/低功耗分层/量产前检查清单 12 项 |
+| 坑清单量产手册类 82–93 | `references/known-pitfalls.md` | 内存碎片最大块不足/IRAM 塞爆/栈水位无监测/递归爆栈/假连接/弱网猛发/NVS 频写/PHY 校准缺失/RC 漂移/OTA 断点续传/量产日志/OTA 互斥，共 12 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（量产/上线/交付/检查清单/内存泄漏/碎片/断点续传）、计数 81→93、README 18 份；README 标题去「（DSH Skill）」括号（技能可给任意 agent 调用） |
 
 ## 待验证（首个实测工程时逐项确认并回写）
 
