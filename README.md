@@ -10,7 +10,7 @@
 面向 AI agent 的 ESP32 固件开发知识技能：**双轨框架**（ESP-IDF 5.3.x 主轨 + Arduino arduino-esp32 3.x 副轨）、**三芯片覆盖**（经典 ESP32 / ESP32-S3 / ESP32-C3），带工程纪律检查器与沉淀机制。
 对标同作者的 STM32 技能（[embed](https://github.com/wdcjx/Embedded-programming)），把"能生成代码"升级为"能按老手纪律生成代码并静态自检"。
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧五份文档与坑清单 #36–71，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿）六份文档与坑清单 #36–81，源自已上板运行的源工程，转写未二次复测）。
 > 每次生成都应声明"未经编译与上板验证"，并给出验证路径（idf.py build → flash → monitor）。
 
 ## 目录结构
@@ -18,7 +18,7 @@
 | 路径 | 内容 |
 |---|---|
 | `SKILL.md` | 技能主文件：模式路由、六步工作流、11 条硬约束、自检清单、资源表（agent 的入口） |
-| `references/` | 16 份知识文档（逐份清单见下方） |
+| `references/` | 17 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
 | `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop 等规则，`VIOLATION` 清零才交付 |
 | `scripts/ci_check.py` | CI 回归：validator 七样本判定基线 + 资源表/坑编号/文档计数一致性检查 |
@@ -29,7 +29,7 @@
 | `CONTRIBUTING.md` | 贡献指南：文档规范、validator 纪律、沉淀流程 |
 
 <details>
-<summary><b>references/ 全部 16 份文档</b>（点开清单）</summary>
+<summary><b>references/ 全部 17 份文档</b>（点开清单）</summary>
 
 | 文档 | 内容 |
 |---|---|
@@ -46,9 +46,10 @@
 | `iot-gateway-patterns.md` | IoT 网关：多环境配置/PubSubClient 生产化/命令分发/掉电回放 |
 | `voice-assistant-xiaozhi.md` | 语音 AI 助手（xiaozhi 转写）：安装构建/设备状态机/WebSocket 协议/AFE 音频管线/板级工厂/防变砖 OTA |
 | `sensor-max30102.md` | MAX30102 心率血氧：接线/寄存器初始化序列/FIFO/AMPD 心率/R 比值 SpO2 |
+| `motor-control-foc.md` | 电机控制与 CAN：TWAI 闭环/电压环协议/LQR 实时 K/VMC 雅可比/BLE 遥控载具 |
 | `power-and-sleep.md` | 低功耗：深睡范式/唤醒源/RTC 内存/gpio_hold |
 | `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位 |
-| `known-pitfalls.md` | 71 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI，症状→根因→修法 |
+| `known-pitfalls.md` | 81 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制，症状→根因→修法 |
 
 </details>
 

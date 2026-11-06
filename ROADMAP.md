@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧五份文档与坑清单 #36–71，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿）六份文档与坑清单 #36–81，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -43,6 +43,14 @@
 | 坑清单传感器类 54–61 + 语音 AI 类 62–71 | `references/known-pitfalls.md` | MAX30102 8 条 + xiaozhi 10 条，编号续接不改号 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+2 行、frontmatter 触发词、计数 53→71、README 16 份、环境注记加 xiaozhi 路径与 IDF 6.x 要求 |
 
+## 已沉淀（第五轮：电机控制实战提炼）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| 电机控制与 CAN（FOC 轮腿范式） | `references/motor-control-foc.md` | 源自 Skythinker foc-wheel-legged-robot（GPL-3.0，**已上板运行**）：TWAI 最小闭环+bus-off 补丁/电压环协议/LQR 实时 K 部署流/VMC 雅可比转置/BLE 遥控载具/分级失控保护 |
+| 坑清单电机控制类 72–81 | `references/known-pitfalls.md` | CAN bus-off 静默/BLE 断连末指令/零偏硬编码/量程档不符/保护死等/跨任务无锁/低压假值/延迟叠加/调试帧裸写 RAM/上电黑窗，共 10 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（FOC/电机控制/CAN/TWAI/LQR/VMC/平衡车/轮腿/MPU6050）、计数 71→81、README 17 份 |
+
 ## 待验证（首个实测工程时逐项确认并回写）
 
 - [ ] `idf.py build` 编译通过（模板/示例）：IDF 5.3.1 实际编译暴露的 API 拼写与头文件问题
@@ -59,6 +67,7 @@
 - [ ] IoT 网关：PubSubClient setBufferSize 与服务器真实吞吐实测；ArduinoJson v6→v7 迁移后编译验证（源工程已上板部署验证 2.x 路径，本条为吞吐复现与 v7 编译）
 - [ ] 语音 AI：xiaozhi 构建命令（scripts/build.py）在 IDF release/v6.1 下本机复现编译（本机仅 5.3.1，源工程已上板运行，本条为跨 SDK 复现）
 - [ ] MAX30102：MPY（÷8 量纲）与 SparkFun（18bit 原值）两固件阈值衔接实测（源工程已上板，本条为跨固件复现）
+- [ ] 电机控制：TWAI bus-off 恢复补丁（recovery+start）在真实总线上验证；MPU6050 量程显式设置后 DMP 输出一致性（源工程已上板运行，本条为修复项复现）
 
 ## 下一批候选主题
 

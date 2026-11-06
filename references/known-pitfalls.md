@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、未上板实测；**#36–53 源自已上板工程**（用户提供的真实硬件运行项目）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、未上板实测；**#36–81 源自已上板工程**（用户提供的真实硬件运行项目）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -153,5 +153,22 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 69 | 【语音 AI】device AEC 与 server AEC 同开直接编译失败 | 二者互斥，`#error` 显式拦截 | 只开一个；AEC 能力在 hello 的 features.aec 里协商（application.cc:28-36） |
 | 70 | 【语音 AI】4G 板（ML307）收事件再发数据死机/无响应 | 模组 AT 事件任务上下文内禁止再发起发送 | 回调一律 Schedule() 到主任务再发送；心跳靠 MQTT keepalive 不自造（websocket_protocol.cc:161-170） |
 | 71 | 【语音 AI】MCP 工具调用偶发不响应 | 工具数量超限/未按服务端 prompt cache 建议前置排列，被服务器静默丢弃 | 控制工具数量、常用工具前置；注册工具与 GetDeviceStatusJson 状态对齐（mcp_server.cc:29-31） |
+
+## 电机控制类（72–81）
+
+源自 Skythinker foc-wheel-legged-robot（已上板工程；上游 gitee.com/skythinker/foc-wheel-legged-robot；证据为 esp32-controller\software\src\main.cpp 行号）。
+
+| # | 症状 | 根因 | 修法 |
+|---|------|------|------|
+| 72 | 【电机】总线一次异常（短路/强干扰）后 CAN 节点永久静默，重启才恢复 | `alerts_enabled=TWAI_ALERT_NONE` 且从不检查 bus_off，无 `twai_initiate_recovery()` | 启用 TWAI_ALERT_BUS_OFF 告警，触发后 recovery+`twai_start()`；周期查 `twai_get_status_info().state`（main.cpp:280-286,301） |
+| 73 | 【电机】蓝牙遥控断连后机器人沿最后指令继续行驶 | onDisconnect 只重启广播，无指令超时；speedCmd/yawSpeedCmd 保持旧值 | 断连回调或 >500ms 无 0xAA 帧即清零速度/偏航指令（main.cpp:764-768） |
+| 74 | 【电机】每换一块板都要手改源码重烧 | IMU 零偏 6 个 int 硬编码（accel −668/−1632/998，gyro 283/80/42），标定函数被注释 | 上电静止自校准（均值法）+ NVS 存储零偏（main.cpp:392-400） |
+| 75 | 【电机】角速度读数整体偏小约 8 倍/姿态发散 | 按 16.4 LSB/(°/s)（±2000dps）换算但未调 `setFullScaleGyroRange`，库默认可能是 ±250dps | 初始化显式设 `MPU6050_GYRO_FS_2000`；换算系数必须与实际量程档一致（main.cpp:346-348） |
+| 76 | 【电机】跌倒后保护分支卡死不退出、也不复位 | `while(PROTECT_CONDITION)` 无超时，IMU/CAN 停更则条件永真；esp_task_wdt 只 include 从未注册 | 保护等待加超时与退出路径；电机类任务显式 `esp_task_wdt_add()`（main.cpp:671-676,18） |
+| 77 | 【电机】控制环偶发用到半更新的传感器数据，抖动无规律 | motor.angle/speed、imuData 由 CAN/IMU 任务写、Ctrl_Task 读，无临界区/锁 | portENTER_CRITICAL 快照或序列锁；多字节共享量禁止裸读写（main.cpp:195-196 vs 553-556） |
+| 78 | 【电机】电池低压后输出突然变弱/行为突变 | `sourceVoltage<8V` 判无效后置假值 12 → motorOutRatio 按满电算偏小 | 低压直接停机报警，不伪造电压值（main.cpp:858-860） |
+| 79 | 【电机】端到端控制延迟抖动大，最坏 >6ms | 指令 2ms 任务 + 反馈 2ms 轮询 + 250Hz 控制环三级串行叠加 | 反馈进控制环内联读取，或提 CAN 接收任务优先级（main.cpp:239,286,699） |
+| 80 | 【电机】BLE 调试帧可任意读写设备 RAM，量产有安全隐患 | 0xDB Linkscope 帧仅地址段限制无鉴权；GATT 无加密未配对（SMP 使能但没用） | 量产关闭调试特征；或白名单地址段+强制配对加密（main.cpp:800-803；debug.c:11） |
+| 81 | 【电机】上电后约 5s 无响应，用户误以为已就绪 | setup() 先 `vTaskDelay(5000)` 黑窗，期间无 CAN 输出 | 上电用 LED 明示状态；延时期间打日志（main.cpp:878-880） |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。
