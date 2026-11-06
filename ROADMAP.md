@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关三份文档与坑清单 #36–53，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧五份文档与坑清单 #36–71，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -34,6 +34,15 @@
 | 检查器 BLE 规则 | `scripts/validate_esp_generated.py` | R4 加 BLE API 入 ISR（VIOL）与 ->notify（WARN）；R13 加 setCallbacks/WiFi.onEvent/onConnect 类回调；REGISTRATION_RES 加 timerAttachInterrupt；FUNC_RE 兼容 C++ 类方法（缩进/override）。自测：新反例 5 VIOL/1 WARN、正例 0、旧基线 16/3 无回归 |
 | BLE 测试样本 | `tests/bad_sample_ble.cpp` / `good_sample_ble.cpp` | 反例命中全部新规则；正例干净通过 |
 
+## 已沉淀（第四轮：语音 AI 与传感器实战提炼）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| 语音 AI 助手范式 | `references/voice-assistant-xiaozhi.md` | 源自 xiaozhi-esp32（github.com/78/xiaozhi-esp32，**已上板运行**）：安装构建（IDF 6.x 门槛）/设备状态机/WebSocket+MQTT/UDP 协议/AFE 音频管线/板级工厂/防变砖 OTA |
+| MAX30102 心率血氧 | `references/sensor-max30102.md` | 源自 heart-rate-spo2-master（Arduino+MicroPython+PC 三版，**已上板**）：寄存器初始化序列/FIFO 格式/AMPD 心率/R 比值 SpO2/量纲陷阱 |
+| 坑清单传感器类 54–61 + 语音 AI 类 62–71 | `references/known-pitfalls.md` | MAX30102 8 条 + xiaozhi 10 条，编号续接不改号 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+2 行、frontmatter 触发词、计数 53→71、README 16 份、环境注记加 xiaozhi 路径与 IDF 6.x 要求 |
+
 ## 待验证（首个实测工程时逐项确认并回写）
 
 - [ ] `idf.py build` 编译通过（模板/示例）：IDF 5.3.1 实际编译暴露的 API 拼写与头文件问题
@@ -48,6 +57,8 @@
 - [ ] BLE HID：经典 BLE 2.x（本机 core 2.0.11）在 C3 上对 iOS/Android/Windows 三平台发报告实测；onDisconnect 重广播实测（源工程已上板验证核心行为，本条为跨平台复现）
 - [ ] 实时控制：互补滤波/混控在真实 IMU（如 MPU6050）上的姿态收敛与电机响应实测（源工程已上板飞行验证，本条为跨 IMU 复现）
 - [ ] IoT 网关：PubSubClient setBufferSize 与服务器真实吞吐实测；ArduinoJson v6→v7 迁移后编译验证（源工程已上板部署验证 2.x 路径，本条为吞吐复现与 v7 编译）
+- [ ] 语音 AI：xiaozhi 构建命令（scripts/build.py）在 IDF release/v6.1 下本机复现编译（本机仅 5.3.1，源工程已上板运行，本条为跨 SDK 复现）
+- [ ] MAX30102：MPY（÷8 量纲）与 SparkFun（18bit 原值）两固件阈值衔接实测（源工程已上板，本条为跨固件复现）
 
 ## 下一批候选主题
 

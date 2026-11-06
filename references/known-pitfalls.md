@@ -122,4 +122,36 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 52 | 【IoT 网关】服务器拒收深嵌套多空字段 JSON，纯文本却能发 | 对端模型校验严格：空字符串字段解析失败、嵌套层级超出模型 | 上行降级平面格式；空字段发 `null` 不发 `""`（时间戳类尤其）；发出前 deserializeJson 回读自验 |
 | 53 | 【IoT 网关】域名解析正常、浏览器能开，MQTT 就是连不上 | DNS 缓存陈旧/解析超时指向错误 IP | WiFi.hostByName 预解析→WiFiClient TCP 探活→探活成功即 `setServer(IP, port)` 绕过域名，故障段定位进日志 |
 
+## 传感器类（54–61）
+
+源自 heart-rate-spo2-master（MAX30102，已上板工程；寄存器语义以 MAX30102 datasheet 为准）。
+
+| # | 症状 | 根因 | 修法 |
+|---|---|---|---|
+| 54 | 【MAX30102】MicroPython 固件 + PC 算法，指位 Fin 恒 0、永远"未检测到手指" | init.py:581-583 读数 `>>pulse_width`（411µs 时=3）使数值÷8，低于 PC 端 ir>150000 阈值（该阈值基于 SparkFun 18bit 不移位量纲） | 删移位保持 18bit 原始量纲，或按固件区分阈值；跨固件对接先对同一手指采一组数对量纲 |
+| 55 | 【MAX30102】I2C 无 ACK / Arduino 循环打印 "Sensor connection failed!" | 接线错（README 两套 ESP32 引脚：Arduino=C3 的 IO8/IO9，MPY=IO10/IO6）/无上拉/地址非 0x57；且代码不自检：check_part_id 无人调用、scan() 结果被丢弃（init.py:526-529） | 初始化前 `scan()` 应见 87(0x57) 再继续；核对上拉（以模块原理图为准）；失败即停并报错，勿带病运行 |
+| 56 | 【MAX30102】波形断续、脉冲"缺拍" | MPY check() 每次只读 1 样本 + OVF(0x05) 从不读 + rollover 覆盖 + 软件队列仅 4 深（init.py:156,684），主循环稍慢即溢出丢样 | 批量读完 WR−RD 全部样本、每轮检查 OVF 计数、加大软件队列；50Hz 有效率下主循环节拍必须 <20ms |
+| 57 | 【MAX30102】BPM 数值乱跳、偶发尖峰 | AMPD 找峰作用于未滤波 red 序列（运动伪影直接成峰），BPM 用单个 RR 间期折算（Max_30102.py:72-82），10 点均值压不住野值 | 滤波后找峰（或 AMPD 后加间期合理性窗），BPM 用最近 N 个 RR 中值而非单个；显示层再做平滑 |
+| 58 | 【MAX30102】SpO2 周期性跳 0 | AC/DC 取窗口 max/min 对窗长和伪影敏感，出界(>100/<0)整体置 0（Max_30102.py:58-65） | 仅 Fin=1 且 data_valid 才计算；逐样本剔野（与中值偏离>阈值丢帧）；窗长覆盖 ≥2 个完整搏动 |
+| 59 | 【MAX30102】自改采样率/平均后心率血氧全乱 | PC 端窗口固定 120 样本、滤波 Wn=0.1/0.3 是相对 Nyquist 的归一化频率，隐含"有效 50Hz"假设 | 固件保持 50Hz 有效输出（sps/avg 不变），或 PC 按 time 戳重采样并同步改 Wn 与窗口 |
+| 60 | 【MAX30102】SpO2 大幅偏离而心率正常 | 样本字节序 LED1(Red)3B+LED2(IR)3B 接反使 R2 分子分母互换（Max_30102.py:62）；init.py:42-43 注释把 0x0C/0x0D 红外标反更易误导 | 以 datasheet 核对 0x0C=Red、0x0D=IR；实测区分：红光手指吸收随搏动更明显/遮挡单 LED 验证通道 |
+| 61 | 【MAX30102】噪声大、数据漂、模块发热 | 亮度 150≈29mA/通道、双 LED 峰值叠加，供电与去耦不足（仓库未写供电规范） | 3.3V 稳压+去耦以模块原理图为准；先降亮度（如 60）验证噪声是否随电流下降；连续应用加采集间隔降功耗 |
+
+## 语音 AI 类（62–71）
+
+源自 xiaozhi-esp32（已上板工程；上游 github.com/78/xiaozhi-esp32）。
+
+| # | 症状 | 根因 | 修法 |
+|---|---|---|---|
+| 62 | 【语音 AI】xiaozhi-esp32 编不过 / 组件 ABI 报错，或 C3 上 v6.1 tag 固件 Wi-Fi 初始化失败 | 项目强制 IDF≥6.0.1（推荐 release/v6.1 分支，不支持 5.x）；v6.1 发布标签在 C3 有 Wi-Fi init 失败（官方 #2344） | 装 IDF 6.x 用分支不用 tag；切 SDK 后 `git submodule update --init --recursive` + 重新 export + `idf.py fullclean`（README_zh.md:17,121） |
+| 63 | 【语音 AI】4MB flash 设备永远收不到 OTA 更新 | partitions/v2/4m.csv 只有 factory 无 ota_0/1；MarkCurrentVersionValid 跳过 factory 分区 | 换 ≥8MB flash 或 v1 分区表；或引导手动烧录（partitions/v2/4m.csv:6；ota.cc:260-265） |
+| 64 | 【语音 AI】无 PSRAM 板唤醒词无效 / 说话卡死 | USE_AUDIO_PROCESSOR depends SPIRAM；AFE 内存/任务栈/唤醒 64KB 环缓全放 PSRAM | 确认板型带 PSRAM（S3/P4/S31 走 AFE）；ESP32/C3 走 LiteAudioEngine 独立 WakeNet（Kconfig.projbuild:1059-1066） |
+| 65 | 【语音 AI】对话中途卡死无声，重启才恢复 | 音频发送失败未清空剩余队列，Opus 任务阻塞等满队列→整条输入管线死锁 | 发送路径失败必须清队列（上游 application.cc:253-258 已修）；自定义发送路径同样处理 |
+| 66 | 【语音 AI】烧错板型：无声 / 引脚错乱 / OTA 身份混乱 | 每板 config.h 硬编码 I2S/PA 引脚；改已有板引脚破坏 OTA 板身份 | 板目录逐字核对再烧；新硬件复制新板目录+DECLARE_BOARD，勿改已有板（AGENTS.md:29） |
+| 67 | 【语音 AI】开着音箱说话唤醒不了 / 自打断 | 无 AEC 硬件时唤醒词被自家喇叭淹没；device AEC 仅白名单板可选；R 通道必须是播放参考而非第二麦 | 用 BOX 系列等带参考通道硬件（AUDIO_INPUT_REFERENCE）；或关播放再唤醒；AEC 关时用 AutoStop 听音模式（Kconfig.projbuild:1068-1081） |
+| 68 | 【语音 AI】WebSocket 一直连不上，日志 "No websocket section found" | ws/mqtt 配置由 OTA 接口 HTTP 响应下发并写 NVS；CONFIG_OTA_URL 错或网络不通→无配置→回退默认 MQTT | 核对 ota_url 与 Device-Id/Token；抓 OTA 响应确认 websocket 节点存在（ota.cc:56-63,180-199） |
+| 69 | 【语音 AI】device AEC 与 server AEC 同开直接编译失败 | 二者互斥，`#error` 显式拦截 | 只开一个；AEC 能力在 hello 的 features.aec 里协商（application.cc:28-36） |
+| 70 | 【语音 AI】4G 板（ML307）收事件再发数据死机/无响应 | 模组 AT 事件任务上下文内禁止再发起发送 | 回调一律 Schedule() 到主任务再发送；心跳靠 MQTT keepalive 不自造（websocket_protocol.cc:161-170） |
+| 71 | 【语音 AI】MCP 工具调用偶发不响应 | 工具数量超限/未按服务端 prompt cache 建议前置排列，被服务器静默丢弃 | 控制工具数量、常用工具前置；注册工具与 GetDeviceStatusJson 状态对齐（mcp_server.cc:29-31） |
+
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。
