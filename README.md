@@ -13,6 +13,39 @@
 > 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿）六份文档与坑清单 #36–81，源自已上板运行的源工程，转写未二次复测）。
 > 每次生成都应声明"未经编译与上板验证"，并给出验证路径（idf.py build → flash → monitor）。
 
+## 能力列表
+
+**代码生成**
+
+| 能力 | 说明 |
+|---|---|
+| 完整工程生成 | 按需求（芯片 / 模组 / 外设 / 框架）产出 main + CMakeLists + sdkconfig.defaults + 分区表的完整可编译工程 |
+| 双轨框架 | ESP-IDF 5.3.x 主轨（idf.py 闭环 / 组件模型 / menuconfig / 分区表）；Arduino 副轨（库管理与 2.x→3.x 迁移） |
+| 三芯片适配 | 经典 ESP32 / ESP32-S3 / ESP32-C3 内核外设差异 + 引脚禁区核对（strapping / input-only / flash 占用 / ADC 通道） |
+
+**领域配方**（references 按场景路由）
+
+| 领域 | 覆盖 |
+|---|---|
+| 外设 | GPIO / UART / I2C（新驱动）/ SPI / LEDC（PWM、舵机）/ ADC（校准）/ gptimer / NVS / WS2812 |
+| 网络与云 | STA / AP 事件状态机 / ESP-NOW / MQTT / HTTP / OTA（双分区回滚防变砖） |
+| BLE | HID 键盘与媒体键：初始化序列、报告描述符、断连重广播、经典 BLE 与 NimBLE 双库路径 |
+| 实时控制 | 节拍源 / IMU 校准 / 互补滤波姿态 / PID / 四旋翼混控 / 解锁与失控安全状态机 |
+| IoT 网关 | PubSubClient 生产化 / 多环境配置 / 命令信封分发 / 掉电回放 |
+| 语音 AI | xiaozhi 范式：板级抽象工厂 / 设备状态机 / WebSocket 实时音频协议 / 防变砖 OTA |
+| 传感器 | MAX30102 心率血氧：寄存器初始化序列 / FIFO 读取 / AMPD 找峰 / R 比值 SpO2 |
+| 电机控制 | TWAI（CAN）最小闭环 / 电压环协议 / LQR 增益 / VMC 轮腿 / BLE 遥控载具 |
+| 低功耗 | 深睡三档 / 唤醒源 / RTC 内存 / gpio_hold |
+
+**质量与排障**
+
+| 能力 | 说明 |
+|---|---|
+| 静态纪律检查 | `validate_esp_generated.py` 13 类规则：IRAM_ATTR / FromISR / 临界区方向 / 栈字节 / NVS-before-WiFi / BLE API 入 ISR / 任务回调阻塞 / Arduino loop 纪律 |
+| 93 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 |
+| 症状速查 | Guru Meditation 转储 / 看门狗 / 复位原因 / WiFi 断连码 → 三步定位法 |
+| 量产就绪 | 内存泄漏与碎片 / 栈水位 / 弱网限流 / OTA 量产铁律 / 量产前 12 项检查清单 |
+
 ## 目录结构
 
 | 路径 | 内容 |
@@ -20,7 +53,7 @@
 | `SKILL.md` | 技能主文件：模式路由、六步工作流、11 条硬约束、自检清单、资源表（agent 的入口） |
 | `references/` | 18 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
-| `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop 等规则，`VIOLATION` 清零才交付 |
+| `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop 等规则，`VIOLATION` 清零才交付；纯 Python 标准库，无第三方依赖 |
 | `scripts/ci_check.py` | CI 回归：validator 七样本判定基线 + 资源表/坑编号/文档计数一致性检查 |
 | `examples/blink_uart_demo/` | 完整可编译的最小 IDF 工程示例（点灯 + 日志，未上板） |
 | `tests/bad_sample*.c*` | 故意违规的反例样本（含 BLE 反例/正例 `.cpp`），用于检查器自测 |
@@ -75,7 +108,7 @@ npx skills add wdcjx/easyesp
 **本机开发者（Windows，从本地检出即时生效）**：junction 挂载，仓库改动零拷贝同步：
 
 ```powershell
-New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\skills\easyesp" -Target "C:\Users\cjx20\Desktop\easyesp"
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\skills\easyesp" -Target "<仓库检出路径>"
 ```
 
 装好后在任意会话中提到 ESP32 / ESP-IDF / Arduino / WiFi / 点灯 等关键词即可自动触发，或直接点名 `easyesp`。
@@ -92,14 +125,6 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\skills\easyesp" -Target
 
 - 发现 API 写法有误、文档缺配方、新坑：欢迎开 [Issue](https://github.com/wdcjx/easyesp/issues)（模板二选一：bug 反馈 / 知识沉淀建议）或直接 PR，规范见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 有实测工程（编译→烧录→上板）的结论，尤其欢迎回写：把"未上板实测"状态推进为实测修正。
-
-## 本机环境注记
-
-- ESP-IDF 5.3.1 实际目录 `D:\ESPIDE\Espressif\frameworks\esp-idf-v5.3.1`；激活脚本 `D:\ESPIDE\Espressif\idf_cmd_init.bat`（桌面有快捷方式）。
-- 系统 `python` 是 Microsoft Store 空壳不可用；跑脚本用 IDF 自带解释器 `D:\ESPIDE\Espressif\python_env\idf5.3_py3.11_env\Scripts\python.exe` 或激活 IDF 后的 `python`。
-- 检查器只用 Python 标准库（argparse/re/pathlib/subprocess），无需额外依赖。
-- 本机 Arduino15 目录装有 arduino-esp32 core **2.0.11**（含经典 BLE 库，位于 `libraries\BLE`）；BLE HID 文档按 2.x/3.x 双版本标注，本机实测以 2.0.11 为准。
-- 本机沉淀的实战工程源码：`D:\ESP32project\`（xiaozhi-esp32-main、heart-rate-spo2-master、foc-wheel-legged-robot-master 等）。**xiaozhi-esp32 要求 ESP-IDF ≥6.0.1（推荐 release/v6.1 分支），本机 5.3.1 无法编译它**；其余工程以各 README 为准。
 
 ## 维护
 
