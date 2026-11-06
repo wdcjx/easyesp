@@ -1,0 +1,29 @@
+# sdkconfig.defaults — easyesp 技能配置基线
+# 纪律：仓库只提交本文件，sdkconfig 本体（menuconfig 产物）不入库。
+# 修改配置的正规入口是 idf.py menuconfig，改完把与默认不同的项同步到这里。
+# 应用方式：本文件存在时 idf.py build 自动套用；改完建议 idf.py fullclean 后重建。
+
+# ---- 日志 ----
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y          # 交付默认 INFO；调试期可临时 Debug
+CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE=y       # 运行期可用 esp_log_level_set() 放开
+
+# ---- FreeRTOS ----
+CONFIG_FREERTOS_HZ=1000                  # 默认 100Hz；软定时器表/毫秒节拍按 1kHz 算
+# 栈单位是字节：uxTaskGetStackHighWaterMark 返回的也是字节（见 freertos-on-esp32.md）
+
+# ---- 任务看门狗（保持默认开启；不要用关 WDT 的方式"修"忙循环）----
+CONFIG_ESP_TASK_WDT_INIT=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=10
+
+# ---- Flash / 分区（按实际模组改，烧录前必须核对！）----
+# 经典 WROOM-32 常见 4MB：
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+# WROVER / S3 N16R8 等 8MB/16MB 模组改成对应项，并确认分区表总大小一致
+# CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+# CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+# ---- 串口烧录 ----
+CONFIG_ESPTOOLPY_BAUD_921600=y           # 只提高烧录波特率，不影响运行日志
+
+# ---- 编译优化 ----
+CONFIG_COMPILER_OPTIMIZATION_PERF=y      # 默认 -Og 时改 -O2；性能路径（ISR/实时）必看
