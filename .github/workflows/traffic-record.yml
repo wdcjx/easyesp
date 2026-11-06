@@ -1,0 +1,155 @@
+name: Traffic Record
+
+# 每天记录仓库 clones/views 数据到 traffic_log.csv
+# - GitHub Traffic API 只保留 14 天，必须每天落盘
+# - cron 为 UTC：16:23 UTC ≈ 北京时间 00:23
+# - Traffic API 拒绝 workflow 自带 GITHUB_TOKEN（"Resource not accessible
+#   by integration"，实测 403，permissions: contents: write 也无效），
+#   必须用 PAT 存入仓库 secret TRAFFIC_PAT（Settings → Secrets and
+#   variables → Actions）。fork 者没有 secrets，守卫也会阻止误跑
+# - 下方 git push 仍用 GITHUB_TOKEN（contents: write 够用，不触发其他 workflow）
+
+on:
+  schedule:
+    # 双 cron 冗余：GitHub 高峰期 schedule 会被延迟甚至丢弃（官方文档明示）。
+    # 脚本按日期 merge 幂等，同一天跑两次安全（后写覆盖先写，次日定稿）。
+    # 23 16 = 北京 00:23（UTC 日结束后抓前日定稿数据）
+    # 07 13 = 北京 21:07（美西凌晨低谷，调度丢弃率低，兜底+刷新当日进行中数据）
+    - cron: '23 16 * * *'
+    - cron: '07 13 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: traffic-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: github.repository == 'wdcjx/easyesp'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch traffic and merge into traffic_log.csv
+        env:
+          GH_TOKEN: ${{ secrets.TRAFFIC_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'EOF'
+          import csv, json, os, sys, urllib.error, urllib.request
+
+          repo = os.environ['REPO']
+          tok = os.environ.get('GH_TOKEN', '')
+          if len(tok) < 20:
+              print('FATAL: repo secret TRAFFIC_PAT is missing. The /traffic '
+                    'endpoints reject the workflow GITHUB_TOKEN (403 "Resource '
+                    'not accessible by integration"). Create a PAT (classic '
+                    '"repo" scope, or fine-grained Contents: Read and write on '
+                    'this repo only) and add it as secret TRAFFIC_PAT under '
+                    'Settings -> Secrets and variables -> Actions.', flush=True)
+              sys.exit(1)
+
+          def get(path):
+              req = urllib.request.Request(
+                  f'https://api.github.com/repos/{repo}/traffic/{path}',
+                  headers={
+                      'Authorization': f'Bearer {tok}',
+                      'Accept': 'application/vnd.github+json',
+                      'User-Agent': 'traffic-record',
+                  })
+              try:
+                  with urllib.request.urlopen(req) as r:
+                      return json.load(r)
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode('utf-8', 'replace')
+                  print(f'TRAFFIC-API {path} -> HTTP {e.code}; '
+                        f'x-ratelimit-limit={e.headers.get("x-ratelimit-limit")} '
+                        f'remaining={e.headers.get("x-ratelimit-remaining")}; '
+                        f'token_len={len(tok)}; body: {body}', flush=True)
+                  raise
+
+          data = {}
+          for e in get('clones').get('clones', []):
+              data.setdefault(e['timestamp'][:10], {})['clones'] = e['count']
+              data.setdefault(e['timestamp'][:10], {})['clones_uniques'] = e['uniques']
+          for e in get('views').get('views', []):
+              data.setdefault(e['timestamp'][:10], {})['views'] = e['count']
+              data.setdefault(e['timestamp'][:10], {})['views_uniques'] = e['uniques']
+
+          csv_path = 'docs/traffic_log.csv'
+          existing = {}
+          if os.path.exists(csv_path):
+              with open(csv_path, newline='', encoding='utf-8') as f:
+                  for row in csv.DictReader(f):
+                      existing[row['date']] = row
+
+          for d, v in data.items():
+              row = existing.get(d, {'date': d})
+              row.update({k: str(x) for k, x in v.items()})
+              for col in ('views', 'views_uniques', 'clones', 'clones_uniques'):
+                  row.setdefault(col, '0')
+              existing[d] = row
+
+          cols = ['date', 'views', 'views_uniques', 'clones', 'clones_uniques']
+          with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+              w = csv.writer(f)
+              w.writerow(cols)
+              for d in sorted(existing):
+                  w.writerow([existing[d][c] for c in cols])
+
+          # ---- summary page: cumulative totals (CSV rows are deduped by date,
+          # ---- so a plain sum is the all-time total; today's row is partial
+          # ---- and gets finalized on the next run)
+          days = sorted(existing)
+          n = len(days)
+          tot = {c: sum(int(existing[d][c]) for d in days)
+                 for c in cols[1:]}
+          peak = max(days, key=lambda d: int(existing[d]['clones']))
+          first_d, last_d = days[0], days[-1]
+          lines = [
+              '# 项目流量统计',
+              '',
+              f'> 由 GitHub Actions 每日自动更新（北京时间 00:00 前后）。数据起点 {first_d}，明细见 [traffic_log.csv](traffic_log.csv)。',
+              '',
+              f'- **累计克隆：{tot["clones"]} 次**，独立克隆者 {tot["clones_uniques"]} 人·天',
+              f'- 累计访问：{tot["views"]} 次，独立访客 {tot["views_uniques"]} 人·天',
+              f'- 日均克隆 {tot["clones"] / n:.1f} 次；单日峰值 {existing[peak]["clones"]} 次（{peak}）',
+              '',
+              '口径说明：GitHub Traffic API 仅保留最近 14 天，本文档按日快照累积；uniques 为按天去重口径'
+              '（同一人跨天重复克隆各计一天），与 GitHub Insights 官方口径一致；最近一天为进行中数据。',
+              '',
+              '## 最近 14 天',
+              '',
+              '| 日期 | 访问 | 独立访客 | 克隆 | 独立克隆者 |',
+              '|------|------|----------|------|------------|',
+          ]
+          for d in days[-14:]:
+              r = existing[d]
+              lines.append(f"| {d} | {r['views']} | {r['views_uniques']} | {r['clones']} | {r['clones_uniques']} |")
+          with open('docs/traffic_summary.md', 'w', encoding='utf-8') as f:
+              f.write('\n'.join(lines) + '\n')
+
+          # ---- traffic.json: data source for shields.io dynamic badges
+          # ---- (README total-clones / unique-cloners badges read this file)
+          with open('docs/traffic.json', 'w', encoding='utf-8') as f:
+              json.dump({'schemaVersion': 1,
+                         'clones': {'total': tot['clones'], 'uniques': tot['clones_uniques']},
+                         'views': {'total': tot['views'], 'uniques': tot['views_uniques']},
+                         'days': n, 'since': first_d, 'updated': last_d}, f, indent=2)
+          print(f'traffic_log.csv: {n} days; totals: clones={tot["clones"]} uniques={tot["clones_uniques"]}')
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/traffic_log.csv docs/traffic_summary.md docs/traffic.json
+          if git diff --cached --quiet; then
+            echo "No traffic change, skip commit"
+          else
+            git commit -m "chore: record daily traffic"
+            git push
+          fi
