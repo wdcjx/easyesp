@@ -97,4 +97,29 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 34 | arduino-esp32 2.x→3.x 升级后 ledcSetup/ledcAttachPin「未定义」编译失败 | 3.x 重写 LEDC API，channel 概念隐藏 | `ledcAttach(pin, freq, res)` 替代 ledcSetup＋ledcAttachPin；`ledcWrite(pin, duty)`；`ledcDetach(pin)`；其余差异对照 3.x API 手册 |
 | 35 | Keil/MDK 迁来源码注释乱码、字符串长度异常 | 文件编码 GBK，工具链按 UTF-8 | 全部转 UTF-8；新文件统一 UTF-8；中文字面量按 3 字节/字参与 sizeof |
 
+## 实战项目类（36–53）
+
+源自三个真实项目源码审计（症状标签：【BLE HID】=Keybrick C3 BLE 键盘；【飞控】=Flix 四旋翼；【IoT 网关】=yihong-iot MQTT 网关），模式详解分别见 ble-hid-arduino.md / realtime-control.md / iot-gateway-patterns.md。未经本机复现，条目本身来自已运行项目的真实故障记录。
+
+| # | 症状 | 根因 | 修法 |
+|---|------|------|------|
+| 36 | 【BLE HID】BLE 键盘断连（手机切走/超时）后手机再也搜不到设备 | onDisconnect 回调里没重启广播，从机只广播一次 | onDisconnect 里 `BLEDevice::getAdvertising()->start();`（经典库与 NimBLE 同理）；断连事件是常态不是异常，必须处理 |
+| 37 | 【BLE HID】HID 报告在这台手机生效、换一台失灵 | 报告描述符 REPORT_ID 约定与系统栈实现不一致 | 描述符/发送两侧统一"键值不带 REPORT_ID 前缀"（keyArray[0]=modifier 起）；跨 iOS/Android/Windows 实测后再定稿 |
+| 38 | 【BLE HID】电子节拍器/周期任务越跑越偏，BPM 实测偏低 | 每拍用 `delay(beatMs)` 对齐：执行耗时叠加进周期 | 增量法：`nextBeat += beatMs;` 循环条件 `while (millis() - lastBeat < beatMs) yield();` 或到点即发，误差不累积 |
+| 39 | 【BLE HID】按键按一下、对端连发多次 | 双读去抖只判电平稳定，没判状态沿（按下→抬起各触发一次逻辑） | shouldSend 一次性标志：按下沿置位、发送后清；isReleased 检测抬起沿才允许下次 |
+| 40 | 【BLE HID】普通键正常、媒体键（播放/音量）无效 | Consumer Control 用法被塞进键盘报告数组 | 媒体键走独立 Consumer 报告（独立 REPORT_ID 的 16bit 位图描述符），与键盘报告分开发送 |
+| 41 | 【BLE HID】GPIO 模拟 I2C 驱动 OLED 花屏/半屏 | 软 I2C 无 ACK 检查、无开漏配置，时序错也当成功 | 换硬件 Wire（C3: GPIO8=SDA/GPIO9=SCL 默认），或软 I2C 开漏+每字节查 ACK，失败重试 |
+| 42 | 【BLE HID】长按切换输入模式后，原模式按键持续"卡住" | 切走时没发全零报告，对端仍持有旧按下状态 | 任何模式切换/休眠前先发全零空报告（release all），再停发送 |
+| 43 | 【飞控】换 IMU 芯片或改安装朝向后，姿态疯转/一发油门就翻 | 机体坐标系映射 rotateIMU 是单行硬编码，换硬件后轴/符号全错 | 按新 IMU 的轴映射改那一行；物理验证：平放 z≈+1g、机头抬起 pitch 符合定义，再上桨 |
+| 44 | 【飞控】飞行中调参（写 NVS/Preferences）瞬间姿态抽动、掉高 | NVS 写是毫秒级阻塞 flash 操作，卡进 1kHz 控制环丢拍 | 飞行状态（motorsActive()）禁写 NVS，参数落地统一 disarm 后或地面保存；脏标志 1Hz 批量化 |
+| 45 | 【飞控】电机启动/加油门瞬间整机复位循环，日志报 brownout | MOSFET 浪涌拉垮电源触发欠压复位 | 硬件优先：电源余量、加粗地线、母线电容；软件最后手段 `REG_CLR_BIT(RTC_CNTL_BROWN_OUT_REG, RTC_CNTL_BROWN_OUT_ENA)` 关欠压复位（掩盖不解决，仅隔离测试用） |
+| 46 | 【飞控】testMotor/单电机测试时转时不转 | LEDC 改占空撞上当前周期未结束，占空丢失（arduino-esp32 #5306） | 改写占空前 `delay(50)` 等当前 PWM 周期走完；或用 ESP32 LEDC 硬件的 duty 更新语义（见 #34 的 3.x API） |
+| 47 | 【飞控】地面站（QGC）连不上飞控 WiFi | AP+UDP 14550 用广播包，部分 GCS 不发首包触发不了下行 | 连 Drone_WiFi 后在 QCG 手动指定/触发通信（先发包改单播对端 IP），或固件侧定期广播心跳 |
+| 48 | 【飞控】悬停缓慢漂移，越飞越歪 | 空中仍在用加计校正姿态：加计含运动加速度，偏置被错误吸收 | landed 判定（!motorsActive() 且 \|accNorm−1g\|<10%）才校正；起飞前静止 ≥2s 完成陀螺 bias 校准 |
+| 49 | 【IoT 网关】PubSubClient 发大 JSON（>256B）总失败，publish 返回 0 | PubSubClient 默认缓冲 256B，超长 MQTT 包被静默截断/拒发 | `setBufferSize(≥最大消息+512B)`；发送前长度预检，超限拒发并记录，勿截断硬发 |
+| 50 | 【IoT 网关】MQTT connected()==true 但服务器没收到（publish 假成功） | TCP 半开（服务器重启/NAT 超时无 RST），QoS0 无确认 | 发布防御四连：发前查连接+就地重连、长度预检、失败重连重发一次、置脏标志下轮复查；不丢数据靠应用层 guid 回执 |
+| 51 | 【IoT 网关】设备连续运行 49.7 天后心跳/TTL 全错乱 | millis() 回绕；绝对值比较或 millis()/1000 存的 TTL 跨回绕点全错 | 周期判断一律无符号差值 `(now - last) >= period`；持久化 TTL 用 esp_timer_get_time()/RTC，不用 millis |
+| 52 | 【IoT 网关】服务器拒收深嵌套多空字段 JSON，纯文本却能发 | 对端模型校验严格：空字符串字段解析失败、嵌套层级超出模型 | 上行降级平面格式；空字段发 `null` 不发 `""`（时间戳类尤其）；发出前 deserializeJson 回读自验 |
+| 53 | 【IoT 网关】域名解析正常、浏览器能开，MQTT 就是连不上 | DNS 缓存陈旧/解析超时指向错误 IP | WiFi.hostByName 预解析→WiFiClient TCP 探活→探活成功即 `setServer(IP, port)` 绕过域名，故障段定位进日志 |
+
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。

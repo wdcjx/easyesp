@@ -18,7 +18,8 @@ validate_esp_generated.py — ESP32（ESP-IDF / Arduino）生成代码工程纪�
   - "真 ISR"识别依据（三者之一，详见 references/isr-and-concurrency-rules.md 铁律 A）：
       1) 定义带 IRAM_ATTR；2) 名字含 isr/irq；3) 被本文件中的注册调用登记
       （gpio_isr_handler_add / attachInterrupt / uart_isr_register / gptimer .on_alarm=）。
-    esp_timer 回调、esp_event 处理器、ESP-NOW 回调按"任务上下文回调"（铁律 B）单独检查阻塞。
+    esp_timer 回调、esp_event 处理器、ESP-NOW 回调、BLE setCallbacks 回调、WiFi.onEvent
+    按"任务上下文回调"（铁律 B）单独检查阻塞。
   - 自测：python validate_esp_generated.py ../tests/bad_sample_isr.c ../tests/bad_sample_task.c
     应报多条 VIOLATION；../templates/main_idf.c 应 PASS。
 """
@@ -40,8 +41,10 @@ KEYWORDS = {
 }
 
 FUNC_RE = re.compile(
-    r"(?m)^(?:static\s+)?(?:[A-Za-z_]\w*[\s\*]+)+(?P<name>[A-Za-z_]\w*)\s*\((?P<params>[^;{}]*)\)\s*\{"
-)  # 返回类型与 IRAM_ATTR/ICACHE_RAM_ATTR 等属性可任意多 token，函数名=最后一个 token
+    r"(?m)^[ \t]*(?:static\s+)?(?:virtual\s+)?(?:inline\s+)?(?:[A-Za-z_]\w*[\s\*]+)+"
+    r"(?P<name>[A-Za-z_]\w*)\s*\((?P<params>[^;{}]*)\)\s*(?:override\s*|noexcept\s*)?\{"
+)  # 返回类型与 IRAM_ATTR 等属性可任意多 token，函数名=最后一个 token；
+# 允许行首缩进与 C++ 方法尾部 override/noexcept，兼容类内 BLE 回调方法定义
 DECL_RE = re.compile(
     r"(?m)^(?:static\s+)?(?:const\s+)?(?P<vol>volatile\s+)?"
     r"(?:unsigned\s+|signed\s+)?(?:[A-Za-z_]\w*[\s\*]+)+"
@@ -55,14 +58,17 @@ REGISTRATION_RES = [
     re.compile(r"\buart_isr_register\s*\(\s*[A-Za-z_]\w*\s*,\s*(?:&\s*)?([A-Za-z_]\w*)"),
     re.compile(r"\.on_alarm\s*=\s*(?:&\s*)?([A-Za-z_]\w*)"),          # gptimer_event_callbacks_t
     re.compile(r"\btimer_isr_callback_add\s*\([^,]+,[^,]+,\s*(?:&\s*)?([A-Za-z_]\w*)"),  # 旧 timer group
+    re.compile(r"\btimerAttachInterrupt\s*\([^,]+,\s*(?:&\s*)?([A-Za-z_]\w*)"),          # Arduino 3.x hw timer
 ]
-# 任务上下文回调（铁律 B）：esp_timer / esp_event / ESP-NOW
+# 任务上下文回调（铁律 B）：esp_timer / esp_event / ESP-NOW / BLE 回调
 TASKCB_REGISTRATION_RES = [
     re.compile(r"\.callback\s*=\s*(?:&\s*)?([A-Za-z_]\w*)"),          # esp_timer_create_args_t
     re.compile(r"\besp_timer_start_(?:once|periodic)\s*\(\s*[A-Za-z_]\w*\s*,\s*(?:&\s*)?([A-Za-z_]\w*)"),
     re.compile(r"\besp_now_register_(?:recv|send)_cb\s*\(\s*(?:&\s*)?([A-Za-z_]\w*)"),
     re.compile(r"\besp_event_handler_register(?:_with)?\s*\([^;]*?,\s*&?([A-Za-z_]\w*)"),
     re.compile(r"\besp_http_client_register_event_handler\s*\([^,]+,\s*&?([A-Za-z_]\w*)"),
+    re.compile(r"\bsetCallbacks\s*\(\s*(?:&\s*)?([A-Za-z_]\w*)\s*\)"),                # 经典 BLE/NimBLE server/characteristic
+    re.compile(r"\bWiFi\s*\.\s*onEvent\s*\(\s*&?([A-Za-z_]\w*)"),                     # Arduino WiFi 事件
 ]
 
 # 任务级 FreeRTOS API → FromISR 版本；None = 无 FromISR 版本，中断内绝对禁止
@@ -105,6 +111,11 @@ ISR_BLOCK_CALL_RE = re.compile(
 ISR_HEAP_RE = re.compile(r"\b(malloc|calloc|realloc|free)\s*\(")
 ISR_NVS_RE = re.compile(r"\b(nvs_set_\w+|nvs_commit|nvs_erase(?:_key|_all)?)\s*\(")
 ISR_WIFI_RE = re.compile(r"\besp_wifi_\w+\s*\(")
+# BLE 协议栈调用：明确 BLE 命名（VIOL）与裸 ->notify（WARN，可能误伤自定义类）
+ISR_BLE_RE = re.compile(
+    r"\b(?:(?:Nim)?BLE\w+::|getAdvertising\s*\(|setBatteryLevel\s*\(|startServices\s*\()"
+)
+ISR_BLE_NOTIFY_RE = re.compile(r"(?:->|\.)\s*notify\s*\(")
 
 TASKCB_BLOCK_RE = re.compile(
     r"(?i)\b(vTaskDelay|ets_delay_us|delay|delayMicroseconds)\s*\("
@@ -249,6 +260,12 @@ def analyze(path, text, findings, irq_owner, project):
         return False
 
     isr_funcs = [f for f in funcs if is_true_isr(f)]
+    # BLE 回调类方法（经典 BLE/NimBLE 的 onConnect/onDisconnect/onWrite 等）按名字识别：
+    # C++ 里 setCallbacks(&obj) 注册的是对象，回调函数名在类定义中，注册点不可见。
+    # 并入 task_cbs，使 R3 反向豁免与 R7/R8 任务检查与其余任务回调一致。
+    TASKCB_NAME_RE = re.compile(
+        r"(?i)^on_(?:connect|disconnect|write|read|notify)$|^on(?:Connect|Disconnect|Write|Read|Notify)$")
+    task_cbs |= {f["name"] for f in funcs if TASKCB_NAME_RE.match(f["name"])}
     cb_funcs = [f for f in funcs if f["name"] in task_cbs and not is_true_isr(f)]
     isr_spans = [(f["open"], f["close"]) for f in isr_funcs]
     isr_names = {f["name"] for f in isr_funcs}
@@ -320,6 +337,15 @@ def analyze(path, text, findings, irq_owner, project):
         for wm in ISR_WIFI_RE.finditer(body):
             add(line_of(text, f["open"] + 1 + wm.start()), VIOL,
                 f"ISR '{f['name']}' 内调用 '{wm.group(0).rstrip('(')}'：esp_wifi API 不可在中断内调用")
+        # R4 BLE：协议栈跑在 BLE/主机任务，中断内禁调
+        for bm in ISR_BLE_RE.finditer(body):
+            add(line_of(text, f["open"] + 1 + bm.start()), VIOL,
+                f"ISR '{f['name']}' 内调用 BLE API '{bm.group(0).rstrip('(')}'："
+                "BLE 协议栈运行在任务上下文，中断内禁调——置标志由任务处理")
+        for bn in ISR_BLE_NOTIFY_RE.finditer(body):
+            add(line_of(text, f["open"] + 1 + bn.start()), WARN,
+                f"ISR '{f['name']}' 内出现 '->notify('：若是 BLE 特征通知，中断内禁调；"
+                "自定义类请确认无阻塞")
         # R5 临界区变体
         for pm in re.finditer(r"\bport(ENTER|EXIT)_CRITICAL\s*\(", body):
             add(line_of(text, f["open"] + 1 + pm.start()), VIOL,
@@ -458,8 +484,8 @@ def analyze(path, text, findings, irq_owner, project):
     for f in cb_funcs:
         for bm in TASKCB_BLOCK_RE.finditer(f["body"]):
             add(line_of(text, f["open"] + 1 + bm.start()), VIOL,
-                f"回调 '{f['name']}'（esp_timer/esp_event/ESP-NOW 等任务上下文）内阻塞 "
-                f"'{bm.group(1)}()'：回调只做短处理，长活置标志/发通知转任务处理")
+                f"回调 '{f['name']}'（esp_timer/esp_event/ESP-NOW/BLE setCallbacks/WiFi.onEvent "
+                f"等任务上下文）内阻塞 '{bm.group(1)}()'：回调只做短处理，长活置标志/发通知转任务处理")
         for hm in ISR_HEAP_RE.finditer(f["body"]):
             add(line_of(text, f["open"] + 1 + hm.start()), VIOL,
                 f"回调 '{f['name']}' 内使用动态内存：回调路径禁止堆操作")

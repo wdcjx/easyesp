@@ -23,6 +23,17 @@
 | 示例工程 | `examples/blink_uart_demo/` | 完成（未上板） |
 | 反例样本 | `tests/bad_sample_isr.c` / `bad_sample_task.c` | 完成 |
 
+## 已沉淀（第二轮：实战项目提炼，源自三个真实项目源码审计）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| BLE HID 键盘（Arduino 轨） | `references/ble-hid-arduino.md` | 源自 Keybrick（C3 BLE HID 键盘）；经典 BLE 2.x + NimBLE 双版本标注；未上板实测 |
+| 实时控制（飞控/控制环） | `references/realtime-control.md` | 源自 Flix 四旋翼（github.com/okalachev/flix 注释版）；IMU 校准/互补滤波/PID/混控/安全状态机；未上板实测 |
+| IoT 网关模式 | `references/iot-gateway-patterns.md` | 源自 yihong-iot GatewayESP32Client（S3/Arduino/PubSubClient）；多环境配置/连接编排/发布防御/命令分发；未上板实测 |
+| 坑清单实战章 36–53 | `references/known-pitfalls.md` | Keybrick 7 条 + Flix 7 条 + yihong 5 条，编号续接不改号 |
+| 检查器 BLE 规则 | `scripts/validate_esp_generated.py` | R4 加 BLE API 入 ISR（VIOL）与 ->notify（WARN）；R13 加 setCallbacks/WiFi.onEvent/onConnect 类回调；REGISTRATION_RES 加 timerAttachInterrupt；FUNC_RE 兼容 C++ 类方法（缩进/override）。自测：新反例 5 VIOL/1 WARN、正例 0、旧基线 16/3 无回归 |
+| BLE 测试样本 | `tests/bad_sample_ble.cpp` / `good_sample_ble.cpp` | 反例命中全部新规则；正例干净通过 |
+
 ## 待验证（首个实测工程时逐项确认并回写）
 
 - [ ] `idf.py build` 编译通过（模板/示例）：IDF 5.3.1 实际编译暴露的 API 拼写与头文件问题
@@ -32,12 +43,16 @@
 - [ ] gptimer on_alarm 回调上下文（默认中断上下文 vs dispatch 方法）验证
 - [ ] ESP-NOW 对端兼容（经典 vs S3 vs C3 混连）
 - [ ] 深睡电流与唤醒源实测（timer/EXT0/EXT1/touch/gpio）
-- [ ] Arduino 3.x LEDC/analogWrite 在已装 core 上的实际行为
+- [ ] Arduino 3.x LEDC/analogWrite 在已装 core 上的实际行为（本机 Arduino15 实装 2.0.11，3.x 行为未实测）
 - [ ] validator 规则在真实工程上的误报率评估
+- [ ] BLE HID：经典 BLE 2.x（本机 core 2.0.11）在 C3 上对 iOS/Android/Windows 三平台发报告实测；onDisconnect 重广播实测
+- [ ] 实时控制：互补滤波/混控在真实 IMU（如 MPU6050）上的姿态收敛与电机响应实测
+- [ ] IoT 网关：PubSubClient setBufferSize 与服务器真实吞吐实测；ArduinoJson v6→v7 迁移后编译验证
 
 ## 下一批候选主题
 
-- BLE/NimBLE 从机与主机示例
+- IDF 轨 BLE（NimBLE-IDF：GATT 自定义服务/主机扫描）——Arduino 轨 HID 已沉淀，本条只剩 IDF 轨
+- 经典蓝牙 SPP 串口透传（Arduino）
 - 以太网（LAN8720/IP101）与 Wi-Fi 共存
 - USB Host / USB Serial JTAG 进阶
 - esp32-camera 图像采集

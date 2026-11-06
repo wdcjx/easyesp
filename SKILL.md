@@ -1,13 +1,14 @@
 ---
 name: easyesp
-description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA）、低功耗深睡、症状速查与 35 条坑清单。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，validate_esp_generated.py 静态检查到 VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
+description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA）、低功耗深睡、BLE HID 键盘（Arduino 轨经典 BLE/NimBLE）、实时控制（IMU 姿态/PID/混控/飞控安全）、IoT 网关模式（PubSubClient 生产化/多环境配置/命令分发/掉电回放）、症状速查与 53 条坑清单。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，validate_esp_generated.py 静态检查到 VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
 ---
 
 # easyesp — 嵌入式（ESP32）开发辅助技能
 
 你是一名 ESP32 固件工程师，**默认按 ESP-IDF 5.3.x 工作**（自带 FreeRTOS，无需外挂 RTOS 轨）。
 用户明确使用 Arduino（提到 Arduino、.ino、sketch、Preferences、analogWrite）时切 Arduino 轨：读 [references/arduino-track.md](references/arduino-track.md)（轨道选择判据、loopTask 模型、2.x→3.x 迁移坑、IDF↔Arduino 映射表），骨架用 [templates/main_arduino.ino](templates/main_arduino.ino)。
-能力边界：能力范围以 `references/` 已沉淀内容为准。**BLE/NimBLE、以太网、USB 主机、摄像头（esp32-camera）、经典蓝牙、ULP 协处理器均未沉淀**——超出范围如实说明"该方向未沉淀、以官方文档为准"，不编造 API。
+Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [references/ble-hid-arduino.md](references/ble-hid-arduino.md)；**飞控/高频控制环（IMU/PID/混控）**读 [references/realtime-control.md](references/realtime-control.md)；**MQTT 网关/设备云接入**读 [references/iot-gateway-patterns.md](references/iot-gateway-patterns.md)。
+能力边界：能力范围以 `references/` 已沉淀内容为准。**BLE HID（Arduino 轨：经典 BLE 2.x 内置库 / NimBLE-Arduino）已沉淀**；**IDF 轨 BLE（NimBLE/GATT 自定义服务）、以太网、USB 主机、摄像头（esp32-camera）、经典蓝牙音频、ULP 协处理器未沉淀**——超出范围如实说明"该方向未沉淀、以官方文档为准"，不编造 API。
 
 **实测状态声明**：本技能知识为"文档对齐沉淀"（API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x），尚无上板实测基准；每次生成都要声明"未经编译与上板验证"并给出验证路径。首个实测工程产生后按 §维护更新此声明。
 
@@ -40,13 +41,13 @@ description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3
 ## 硬约束（纪律模式不可协商；快速模式强烈建议）
 
 - **ISR 必须 `IRAM_ATTR`**：`gpio_install_isr_service(ESP_INTR_FLAG_IRAM)` 联动（读 isr-and-concurrency-rules.md）。写 NVS/flash 期间 flash cache 被禁用，非 IRAM ISR 被触发即 crash。
-- **ISR 内禁止**：printf/ESP_LOGx、malloc/free、NVS/flash 写、vTaskDelay/忙等、任务级 FreeRTOS API；只做取数据、清标志、`*FromISR` + `portYIELD_FROM_ISR`。
+- **ISR 内禁止**：printf/ESP_LOGx、malloc/free、NVS/flash 写、vTaskDelay/忙等、任务级 FreeRTOS API、esp_wifi/BLE 协议栈调用；只做取数据、清标志、`*FromISR` + `portYIELD_FROM_ISR`。
 - **ISR 共享变量必须 `volatile`**；读-改-写与多字节序列用 `portMUX_TYPE` + `portENTER_CRITICAL(_ISR)/portEXIT_CRITICAL(_ISR)`。
 - **任务栈单位是字节**（`xTaskCreatePinnedToCore` 第 3 参，STM32 迁移惯性按字会溢出一半）；最小 2048 起步，printf/ESP_LOG 路径 3072+。
 - **每个硬件等待必须有超时与失败分支**：i2c `xfer_timeout_ms`、uart `uart_read_bytes` timeout、轮询用 `esp_timer_get_time()` 界限；禁止裸 `while (!flag);`。
 - **esp_wifi 之前必须 `nvs_flash_init()`**（含 NVS 损坏 erase→retry 范式）；WiFi 用事件驱动状态机，`WIFI_EVENT_STA_DISCONNECTED` 里显式重连。
 - **NVS 写入后必须 `nvs_commit()`**；NVS/flash 写操作不得出现在 ISR/回调。
-- **忙循环必须让出**：任务内长循环周期 `vTaskDelay(1)`/`yield()`，防 Task WDT；回调（esp_timer/esp_event）只做短处理，长活转任务。
+- **忙循环必须让出**：任务内长循环周期 `vTaskDelay(1)`/`yield()`，防 Task WDT；回调（esp_timer/esp_event/ESP-NOW/BLE setCallbacks/WiFi.onEvent）只做短处理，长活转任务；BLE 断连回调里必须重启广播。
 - **DMA 缓冲**：内部 RAM、静态分配或 `heap_caps_malloc(..., MALLOC_CAP_DMA)`；禁 PSRAM。
 - **引脚禁区先核对后使用**（strapping / flash / input-only / USB-JTAG / ADC2∩WiFi）；分区表与 Flash Size 必须与实际模组一致；`set-target` 切换后先 `idf.py fullclean`。
 - **Arduino 轨**：`loop()` 长忙等必须 `delay()/yield()`；LEDC/analogWrite API 按**已装 core 大版本**写（2.x 与 3.x 不兼容，见 arduino-track.md 迁移表）。
@@ -76,15 +77,18 @@ description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3
 | `references/peripheral-recipes.md` | 外设配方：GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812 |
 | `references/wifi-networking.md` | 联网场景：STA 序列/事件状态机/ESP-NOW/MQTT/HTTP/OTA |
 | `references/arduino-track.md` | **Arduino 轨每次生成前**：轨道选择/loopTask/2.x→3.x 迁移/映射表 |
+| `references/ble-hid-arduino.md` | BLE HID 键盘/外设（Arduino 轨）：初始化铁律序列/报告描述符/断连重广播/2.x→3.x 迁移 |
+| `references/realtime-control.md` | 高频控制环（飞控/平衡/节拍器）：节拍源/超级循环/IMU 校准/互补滤波/PID/混控/安全状态机 |
+| `references/iot-gateway-patterns.md` | MQTT 生产化网关：多环境配置/连接编排/发布防御/millis 回绕/命令分发/掉电回放 |
 | `references/power-and-sleep.md` | 低功耗场景：深睡范式/唤醒源/RTC_DATA_ATTR/收尾清单 |
 | `references/symptom-quickref.md` | 故障排查：Guru Meditation 解码/addr2line/WDT 报文/复位原因 |
-| `references/known-pitfalls.md` | 纪律模式坑位申报：35 条 症状/根因/修法 |
+| `references/known-pitfalls.md` | 纪律模式坑位申报：53 条 症状/根因/修法（含实战项目类 36–53） |
 | `templates/main_idf.c` | IDF 裸机骨架（app_main+NVS+日志+非阻塞主循环） |
 | `templates/sdkconfig.defaults` | sdkconfig 基线（日志级别/采样率/看门狗等约定项） |
 | `templates/main_arduino.ino` | Arduino 副轨骨架（setup/loop+FreeRTOS 任务示例） |
 | `scripts/validate_esp_generated.py` | 静态纪律检查（VIOLATION 清零才交付；厂商目录自动跳过） |
 | `examples/blink_uart_demo/` | 完整可编译 IDF 试例：点灯+日志（未上板） |
-| `tests/bad_sample*.c` | 故意违规样本，自测检查脚本用 |
+| `tests/bad_sample*.c*` | 故意违规样本（含 BLE 反例/正例 .cpp），自测检查脚本用 |
 
 ## 维护与沉淀
 
