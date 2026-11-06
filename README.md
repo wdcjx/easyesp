@@ -54,9 +54,25 @@
 
 </details>
 
-## 安装（Windows）
+## 安装
 
-本技能按 DSH skill 目录规范装配（`SKILL.md` + 同目录资源）。推荐用 junction 挂到本机技能目录，随仓库改动即时生效：
+仓库地址：https://github.com/wdcjx/easyesp
+
+**通用一键安装（Claude Code / Codex 等主流 Agent CLI）**：
+
+```bash
+npx skills add wdcjx/easyesp
+```
+
+该方式在同作者 embed 仓库已实测：自动识别技能名，完整带上 `references/`、`scripts/`（validator）、`templates/` 等子目录，并生成 `skills-lock.json` 便于团队复现。
+
+**DeepSeek Harness (DSH)**：侧边栏「技能库」→ 粘贴仓库链接 https://github.com/wdcjx/easyesp 安装（自动克隆 + 热加载），或把整个 `easyesp` 文件夹放到 `~/.dsh/skills/easyesp`。
+
+**手动**：`git clone https://github.com/wdcjx/easyesp.git`，把克隆出的文件夹改名为 `easyesp` 放到 `~/.claude/skills/`（或 `~/.dsh/skills/`）。
+
+> 注意：安装时目录名应与 SKILL.md 中的 `name: easyesp` 一致。
+
+**本机开发者（Windows，从本地检出即时生效）**：junction 挂载，仓库改动零拷贝同步：
 
 ```powershell
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\skills\easyesp" -Target "C:\Users\cjx20\Desktop\easyesp"
