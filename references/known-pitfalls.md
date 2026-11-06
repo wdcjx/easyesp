@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、未上板实测；**#36–53 源自已上板工程**（用户提供的真实硬件运行项目）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -99,7 +99,7 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 
 ## 实战项目类（36–53）
 
-源自三个真实项目源码审计（症状标签：【BLE HID】=Keybrick C3 BLE 键盘；【飞控】=Flix 四旋翼；【IoT 网关】=yihong-iot MQTT 网关），模式详解分别见 ble-hid-arduino.md / realtime-control.md / iot-gateway-patterns.md。未经本机复现，条目本身来自已运行项目的真实故障记录。
+源自三个**已上板工程**的源码审计（症状标签：【BLE HID】=Keybrick C3 BLE 键盘；【飞控】=Flix 四旋翼；【IoT 网关】=yihong-iot MQTT 网关），模式详解分别见 ble-hid-arduino.md / realtime-control.md / iot-gateway-patterns.md。条目来自已运行项目的真实故障记录；未经本机复现，跨平台/跨版本表现仍需按条目内建议实测。
 
 | # | 症状 | 根因 | 修法 |
 |---|------|------|------|

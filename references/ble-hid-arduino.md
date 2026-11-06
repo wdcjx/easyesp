@@ -1,7 +1,7 @@
 # BLE HID 键盘（Arduino 轨）
 
 > 何时读：做 BLE HID 设备（键盘/媒体键/遥控器）、BLE 从机广播与配对、按键扫描去抖、BLE 电量上报时读本文。
-> 状态：实战项目沉淀（源自量产固件「ESP32-C3 BLE Keybrick」源码提炼，构建于 arduino-esp32 2.x 经典 BLE 库；未在本机复测。3.x 迁移建议对齐官方迁移指南与 NimBLE-Arduino 文档为准）。
+> 状态：实战项目沉淀（源自**已上板量产固件**「ESP32-C3 BLE Keybrick」，源工程在真实硬件长期运行；构建于 arduino-esp32 2.x 经典 BLE 库，本文为源码转写、未在本机二次复测。3.x 迁移建议对齐官方迁移指南与 NimBLE-Arduino 文档为准）。
 
 ## 1. 库选型（先定库再写代码）
 

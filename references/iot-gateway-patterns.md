@@ -1,7 +1,7 @@
 # IoT 网关模式（MQTT 生产化 · 配置管理 · 命令分发）
 
 > 何时读：做"ESP32 当网关/设备端、MQTT 连服务器平台"的工程——多环境配置、MQTT 生产级连接与发布防御、命令下发分发、掉电回放、长周期心跳。简单 MQTT 收发直接看 wifi-networking.md §5 即可，不必读本文。
-> 状态：知识沉淀（源自真实项目 yihong-iot 的 GatewayESP32Client 源码审计，Arduino/PlatformIO/ESP32-S3，构建于 arduino-esp32 2.x；API 对齐 arduino-esp32 2.x/3.x 共有子集，差异处逐条标注，未上板实测）
+> 状态：实战项目沉淀（源自**已上板部署**的 yihong-iot GatewayESP32Client（ESP32-S3 实机运行、Arduino/PlatformIO），本文为源码审计转写、未在本机二次复测；API 对齐 arduino-esp32 2.x/3.x 共有子集，差异处逐条标注）
 
 来源与适用性：
 

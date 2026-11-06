@@ -10,7 +10,7 @@ description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3
 Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [references/ble-hid-arduino.md](references/ble-hid-arduino.md)；**飞控/高频控制环（IMU/PID/混控）**读 [references/realtime-control.md](references/realtime-control.md)；**MQTT 网关/设备云接入**读 [references/iot-gateway-patterns.md](references/iot-gateway-patterns.md)。
 能力边界：能力范围以 `references/` 已沉淀内容为准。**BLE HID（Arduino 轨：经典 BLE 2.x 内置库 / NimBLE-Arduino）已沉淀**；**IDF 轨 BLE（NimBLE/GATT 自定义服务）、以太网、USB 主机、摄像头（esp32-camera）、经典蓝牙音频、ULP 协处理器未沉淀**——超出范围如实说明"该方向未沉淀、以官方文档为准"，不编造 API。
 
-**实测状态声明**：本技能知识为"文档对齐沉淀"（API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x），尚无上板实测基准；每次生成都要声明"未经编译与上板验证"并给出验证路径。首个实测工程产生后按 §维护更新此声明。
+**实测状态声明**：知识分两档——references 中 11 份为"文档对齐沉淀"（API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x，未上板实测）；3 份实战文档（ble-hid-arduino / realtime-control / iot-gateway-patterns）与坑清单 #36–53 源自**用户提供的已上板工程**（源工程在真实硬件运行验证，本文为源码转写、未二次复测）。无论哪档，每次生成都要声明"未经编译与上板验证"并给出验证路径；首个经本技能产出的实测工程完成后按 §维护更新此声明。
 
 ## 模式路由（先判断，再动手）
 

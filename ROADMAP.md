@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：知识沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关三份文档与坑清单 #36–53，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -27,9 +27,9 @@
 
 | 项 | 文件 | 来源与状态 |
 |---|---|---|
-| BLE HID 键盘（Arduino 轨） | `references/ble-hid-arduino.md` | 源自 Keybrick（C3 BLE HID 键盘）；经典 BLE 2.x + NimBLE 双版本标注；未上板实测 |
-| 实时控制（飞控/控制环） | `references/realtime-control.md` | 源自 Flix 四旋翼（github.com/okalachev/flix 注释版）；IMU 校准/互补滤波/PID/混控/安全状态机；未上板实测 |
-| IoT 网关模式 | `references/iot-gateway-patterns.md` | 源自 yihong-iot GatewayESP32Client（S3/Arduino/PubSubClient）；多环境配置/连接编排/发布防御/命令分发；未上板实测 |
+| BLE HID 键盘（Arduino 轨） | `references/ble-hid-arduino.md` | 源自 Keybrick（C3 BLE HID 键盘，**已上板量产运行**）；经典 BLE 2.x + NimBLE 双版本标注 |
+| 实时控制（飞控/控制环） | `references/realtime-control.md` | 源自 Flix 四旋翼（github.com/okalachev/flix 注释版，**已上板飞行**）；IMU 校准/互补滤波/PID/混控/安全状态机 |
+| IoT 网关模式 | `references/iot-gateway-patterns.md` | 源自 yihong-iot GatewayESP32Client（S3/Arduino/PubSubClient，**已上板部署**）；多环境配置/连接编排/发布防御/命令分发 |
 | 坑清单实战章 36–53 | `references/known-pitfalls.md` | Keybrick 7 条 + Flix 7 条 + yihong 5 条，编号续接不改号 |
 | 检查器 BLE 规则 | `scripts/validate_esp_generated.py` | R4 加 BLE API 入 ISR（VIOL）与 ->notify（WARN）；R13 加 setCallbacks/WiFi.onEvent/onConnect 类回调；REGISTRATION_RES 加 timerAttachInterrupt；FUNC_RE 兼容 C++ 类方法（缩进/override）。自测：新反例 5 VIOL/1 WARN、正例 0、旧基线 16/3 无回归 |
 | BLE 测试样本 | `tests/bad_sample_ble.cpp` / `good_sample_ble.cpp` | 反例命中全部新规则；正例干净通过 |
@@ -45,9 +45,9 @@
 - [ ] 深睡电流与唤醒源实测（timer/EXT0/EXT1/touch/gpio）
 - [ ] Arduino 3.x LEDC/analogWrite 在已装 core 上的实际行为（本机 Arduino15 实装 2.0.11，3.x 行为未实测）
 - [ ] validator 规则在真实工程上的误报率评估
-- [ ] BLE HID：经典 BLE 2.x（本机 core 2.0.11）在 C3 上对 iOS/Android/Windows 三平台发报告实测；onDisconnect 重广播实测
-- [ ] 实时控制：互补滤波/混控在真实 IMU（如 MPU6050）上的姿态收敛与电机响应实测
-- [ ] IoT 网关：PubSubClient setBufferSize 与服务器真实吞吐实测；ArduinoJson v6→v7 迁移后编译验证
+- [ ] BLE HID：经典 BLE 2.x（本机 core 2.0.11）在 C3 上对 iOS/Android/Windows 三平台发报告实测；onDisconnect 重广播实测（源工程已上板验证核心行为，本条为跨平台复现）
+- [ ] 实时控制：互补滤波/混控在真实 IMU（如 MPU6050）上的姿态收敛与电机响应实测（源工程已上板飞行验证，本条为跨 IMU 复现）
+- [ ] IoT 网关：PubSubClient setBufferSize 与服务器真实吞吐实测；ArduinoJson v6→v7 迁移后编译验证（源工程已上板部署验证 2.x 路径，本条为吞吐复现与 v7 编译）
 
 ## 下一批候选主题
 
