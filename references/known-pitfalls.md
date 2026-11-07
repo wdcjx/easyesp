@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–101 源自已上板工程**（用户提供的真实硬件运行项目）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–115 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -204,5 +204,26 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 99 | 【Mind+】旧案例 .mp 打开编译后新功能（无头模式/陀螺仪校正）读不到 | .mp 案例文件内嵌**当时版本**的扩展库副本（实测：综合测试.mp 内嵌 V0.0.1 旧库，V0.0.2 才补齐 bit4/bit7 分支）；升级已装扩展不回填旧案例 | 新建案例重新拖积木（引用最新库）；或解包 .mp 替换内嵌扩展目录；发版时在发布日志写明 API 变更 |
 | 100 | 【Mind+】同一编码器拖了两个不同模式积木（如单边沿读数+全周期清零），行为只按其中一个走 | 生成器 `addSetup` 按固定键去重：键名硬编码 `attachSingleEdge` 不含实际模式，后注册的 setup 行覆盖先注册的 | 同一对象只用一种模式积木；写扩展时把模式编进键名（`encoder_${pin}_${mode}`）；生成后核对 .ino 的 setup() |
 | 101 | 【电机/编码器】Arduino core 3.x 或升 IDF 5.2+ 后编译出 deprecation 警告，或新工程找不到 `mcpwm_init` | legacy 驱动（`driver/mcpwm.h` 的 `mcpwm_init/mcpwm_set_duty` 系、`driver/pcnt.h`）在 IDF 5.2+ 标记弃用，新 API 是 `driver/mcpwm_pwm.h`（mcpwm_new_timer/operator/comparator）与 `driver/pcnt_new.h` | 存量库锁版本继续用 legacy（仍可编译）；新写代码按官方迁移指南用新 API；以官方文档为准 |
+
+## MicroPython 商用工程类（102–115）
+
+源自用户提供的已上板商用工程（env-controller v1.5.1-beta，ESP32-S3 N16R8 自编译 MicroPython v1.28；详见 [micropython-env-controller.md](micropython-env-controller.md)）。
+
+| # | 症状 | 根因 | 修法 |
+|---|------|------|------|
+| 102 | 【MP/Web】microdot 保存大配置（>16KB）静默失败，小配置正常 | microdot 默认 `Request.max_content_length=16*1024`，超限直接拒收 body 无业务报错 | 启动时设 `Request.max_content_length = 4*1024*1024`；上传接口自检 content-length 并显式报错 |
+| 103 | 【MP/固件】整机"卡死"无任何异常日志，网络全断 | MicroPython v1.28 `IOQueue.wait_io_event` 对失效 socket 抛 OSError(EIO) 未捕获，崩溃整个 asyncio 事件循环 | 启动期 monkey-patch IOQueue：重建 poll、只剔失效 fd（app_main.py:32-100 打法）；升级固件关注官方修复 |
+| 104 | 【MP/GC】Web/控制周期性卡顿数百 ms | 堆耗尽才触发一次大 GC（曾一次释放 7MB）；SD 同步写阻塞 100ms+；`gc.mem_free/alloc` 单次约 15ms 频繁调用 | `gc.threshold(4*1024*1024)` 小步 GC；心跳/请求路径不落 SD、不 `gc.collect`；内存统计 30s 采一次 |
+| 105 | 【MP/W5500】首次 web 请求后串口刷 `spi transmit failed`，以太网断 | SPI 的 Python 包装对象被 GC 析构，把已交 esp_eth 接管的外设 deinit 了 | 模块级引用（如 `_spi_keep`）钉住底层对象；外设移交 C/底层后 Python 句柄只增引用不析构 |
+| 106 | 【MP/RS485】快速从站响应整帧被吞/总线偶死锁 | DE 方向保持用 Python 粗估 +10ms 过长；asyncio 短睡眠被事件循环吞掉，DE 卡高占线 | 时序敏感路径下沉 C 扩展（`de_write` 硬件判定发完立即释放）；Python 路径用同步 `sleep_ms` 不进事件循环 |
+| 107 | 【MP/RS485】9600 波特长帧 CRC 失败，只收到 20–21 字节 | 帧空闲判定 10ms < 29 字节帧传约 30ms，且 asyncio 事件循环在字节间插空，提前判帧结束 | FRAME_IDLE_MS 提到 30；按波特率×最长帧算空闲阈值；收完再校验长度+CRC |
+| 108 | 【MP/Modbus】写已执行但主机报"从站无响应" | 总线残留污染回显/从站无回显，把回显帧或静默当响应判定 | 写响应窗口 0.8s + 无回显判成功 + 四层回显匹配（modbus.py:150-215 打法） |
+| 109 | 【MP/Modbus-TCP】压测（~25 连接/s 连断风暴）整机冻结 | `asyncio.start_server` 每连接一任务，任务创建/销毁风暴冻结事件循环 | 单任务轮询非阻塞 socket；连接数上限（6）+ 空闲超时（15s）+ 缓冲上限（2KB）防恶意 length |
+| 110 | 【MP/Modbus】u16 寄存器读数 40000 显示成 -25536 | 解析层对所有 datatype 统一做符号扩展 | datatype 区分：仅 s16/s32/int 符号扩展，u16/u32 不动（sensor_service.py:113-122） |
+| 111 | 【MP/asyncio】联动规则里 `await asyncio.sleep(0.01)` 后的动作偶发永不执行 | MicroPython asyncio.sleep 小数秒内部共享单例生成器，并发等待被吞 | 自写 `_sleep_ms`：`ticks_ms` 硬超时 + `sleep(0)` 纯 yield（全项目统一用法） |
+| 112 | 【MP/架构】服务读不到板载输入、latest_data 时有时无 | 其他模块 `import main` 重执行 main.py，状态被重置 | main.py 仅 import app_main 并注册 `_sys.modules['main']` 别名；共享态走中间件模块 latest_data |
+| 113 | 【MP/OTA】升级"成功"但行为没变，且源码泄露在 flash | import 优先 `.py`：新 `.mpy` 落地后旧 `.py` 仍被加载 | .mpy 覆盖时把同名 .py 同步改 `.upg.bak`；升级校验拒绝明文 .py 入包 |
+| 114 | 【MP/MQTT】带用户名密码连 broker 被 RST；断线后永不重连 | umqtt.simple 的 user/password CONNECT 编码 bug；`is_connected()` 曾恒 True 假死 | 自写极简 3.1.1 客户端（分片≤128B）；主循环 0.5s 检测 + 30s 静默重连重订阅 |
+| 115 | 【MP/OTA】升级包损坏/被篡改/版本不符直接变砖 | 无校验链：垃圾 tar、明文 .py、.mpy 字节码版本与固件不符都能落盘 | tar 头 checksum + 截断检测 + 路径白名单 + 拒明文 .py + .mpy 头 0x4D 且版本绑定固件 + 旧文件 .bak + 失败自动回滚 |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。

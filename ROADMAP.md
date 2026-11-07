@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E）七份文档与坑清单 #36–81、#94–101，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller）八份文档与坑清单 #36–81、#94–115，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -66,6 +66,14 @@
 | Mind+ 教育机器人扩展 | `references/mindplus-robot-ext.md` | 源自瑞龙制造 ESP32 物联网机器人 Mind+ 用户扩展库 V0.0.2（已上板，含 fireBeetleEsp32E 编译产物实证；MIT）：Mind+ 扩展库结构（config.json/main.ts 生成器/_menus/.mpext=ZIP/.mp 内嵌库）、MCPWM 电机 H 桥（unit×timer 映射+符号-幅值换向）、PCNT 正交编码器（ESP32Encoder 三模式）、FPV 遥控器 UART 协议（0x66…0x99 帧）、I2C 计分器（0x51/0x20）、RL_PID、legacy→IDF 5.2+ 新 API 迁移注记 |
 | 坑清单教育机器人类 94–101 | `references/known-pitfalls.md` | MCPWM 50Hz 频率 bug/零速双高刹车语义/FpvReadByte 越界 UB/校验和优先级/FPV 脉冲窗丢命令/.mp 内嵌旧库版本漂移（V0.0.1 缺 bit4/bit7 实证）/生成器同键覆盖/legacy API 弃用线，共 8 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（Mind+/图形化编程/MCPWM/PCNT/编码器/H 桥/FPV/瑞龙）、计数 93→101、README 19 份、实战文档 6→7 份 |
+
+## 已沉淀（第八轮：MicroPython 商用环境控制器）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| MicroPython 商用工程范式 | `references/micropython-env-controller.md` | 源自 env-controller v1.5.1-beta（已上板商用部署；ESP32-S3 N16R8，自编译 MicroPython v1.28，16MB flash+8MB PSRAM）：asyncio 10 服务化骨架（SERVICES+create_task+done_callback）、main.py 别名技巧、GC threshold 小步策略、IOQueue monkey-patch、配置驱动 Modbus 主站（指令-通道 schema/符号扩展纪律/UART 自愈）、RTU 从站+TCP 防冻（单任务非阻塞 socket）、自写 MQTT 3.1.1（umqtt bug 规避）、HA Discovery 生命周期（ha_disc.json diff+空 retain）、涂鸦 TuyaLink 直连（HMAC 一机一密/物模型缓存）、规则引擎（滞回/边沿/稳定 id）、配置三轨（NVS/flash JSON/engineer 白名单）、防变砖 OTA（tar 校验链+.mpy v6 绑定+回滚）、W5500 全链路 C 下沉（_spi_keep 防 GC）、C_MIGRATION 结论（渐进下沉不全迁） |
+| 坑清单 MicroPython 商用类 102–115 | `references/known-pitfalls.md` | microdot body 上限/IOQueue 崩事件循环/大 GC 停顿/SPI 被 GC 析构/RS485 DE 时序/帧空闲判定/写回显误判/Modbus-TCP 连断风暴冻结/u16 符号扩展/asyncio.sleep 单例被吞/import main 重执行/.py 优先 .mpy/MQTT 认证+假死/OTA 变砖链，共 14 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（MicroPython/mpy/Modbus/RS485/Tuya/涂鸦/Home Assistant/规则引擎/asyncio）、计数 101→115、README 20 份、实战文档 7→8 份；双轨之外补 MicroPython 第三轨范式 |
 
 ## 待验证（首个实测工程时逐项确认并回写）
 

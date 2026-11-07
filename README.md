@@ -10,7 +10,7 @@
 面向 AI agent 的 ESP32 固件开发知识技能：**双轨框架**（ESP-IDF 5.3.x 主轨 + Arduino arduino-esp32 3.x 副轨）、**三芯片覆盖**（经典 ESP32 / ESP32-S3 / ESP32-C3），带工程纪律检查器与沉淀机制。
 对标同作者的 STM32 技能（[embed](https://github.com/wdcjx/Embedded-programming)），把"能生成代码"升级为"能按老手纪律生成代码并静态自检"。
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E）七份文档与坑清单 #36–81、#94–101，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller）八份文档与坑清单 #36–81、#94–115，源自已上板运行的源工程，转写未二次复测）。
 > 每次生成都应声明"未经编译与上板验证"，并给出验证路径（idf.py build → flash → monitor）。
 
 ## 能力列表
@@ -36,6 +36,7 @@
 | 传感器 | MAX30102 心率血氧：寄存器初始化序列 / FIFO 读取 / AMPD 找峰 / R 比值 SpO2 |
 | 电机控制 | TWAI（CAN）最小闭环 / 电压环协议 / LQR 增益 / VMC 轮腿 / BLE 遥控载具 |
 | 教育机器人 | Mind+ 图形化编程扩展库 / MCPWM 直流电机 H 桥 / PCNT 正交编码器 / FPV 遥控器 UART 协议 / I2C 计分器 |
+| MicroPython | asyncio 服务化商用固件范式 / Modbus 主站+从站 / RS485 / MQTT+Home Assistant / 涂鸦 TuyaLink 直连 / 规则引擎与告警 / W5500 双网 / 防变砖 OTA |
 | 低功耗 | 深睡三档 / 唤醒源 / RTC 内存 / gpio_hold |
 
 **质量与排障**
@@ -43,7 +44,7 @@
 | 能力 | 说明 |
 |---|---|
 | 静态纪律检查 | `validate_esp_generated.py` 13 类规则：IRAM_ATTR / FromISR / 临界区方向 / 栈字节 / NVS-before-WiFi / BLE API 入 ISR / 任务回调阻塞 / Arduino loop 纪律 |
-| 101 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 |
+| 115 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 / MicroPython 商用工程 |
 | 症状速查 | Guru Meditation 转储 / 看门狗 / 复位原因 / WiFi 断连码 → 三步定位法 |
 | 量产就绪 | 内存泄漏与碎片 / 栈水位 / 弱网限流 / OTA 量产铁律 / 量产前 12 项检查清单 |
 
@@ -52,7 +53,7 @@
 | 路径 | 内容 |
 |---|---|
 | `SKILL.md` | 技能主文件：模式路由、六步工作流、11 条硬约束、自检清单、资源表（agent 的入口） |
-| `references/` | 19 份知识文档（逐份清单见下方） |
+| `references/` | 20 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
 | `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop 等规则，`VIOLATION` 清零才交付；纯 Python 标准库，无第三方依赖 |
 | `scripts/ci_check.py` | CI 回归：validator 七样本判定基线 + 资源表/坑编号/文档计数一致性检查 |
@@ -63,7 +64,7 @@
 | `CONTRIBUTING.md` | 贡献指南：文档规范、validator 纪律、沉淀流程 |
 
 <details>
-<summary><b>references/ 全部 19 份文档</b>（点开清单）</summary>
+<summary><b>references/ 全部 20 份文档</b>（点开清单）</summary>
 
 | 文档 | 内容 |
 |---|---|
@@ -82,10 +83,11 @@
 | `sensor-max30102.md` | MAX30102 心率血氧：接线/寄存器初始化序列/FIFO/AMPD 心率/R 比值 SpO2 |
 | `motor-control-foc.md` | 电机控制与 CAN：TWAI 闭环/电压环协议/LQR 实时 K/VMC 雅可比/BLE 遥控载具 |
 | `mindplus-robot-ext.md` | Mind+ 教育机器人扩展：扩展库结构/MCPWM 电机 H 桥/PCNT 编码器/FPV 遥控 UART 协议/I2C 计分器 |
+| `micropython-env-controller.md` | MicroPython 商用工程范式（env-controller 转写）：asyncio 服务化/Modbus 主从站/RS485/MQTT+HA/涂鸦 TuyaLink/规则引擎/W5500/防变砖 OTA |
 | `production-readiness.md` | 量产工程纪律：内存泄漏与碎片/栈水位/弱网限流/OTA 铁律/低功耗分层/量产前检查清单 |
 | `power-and-sleep.md` | 低功耗：深睡范式/唤醒源/RTC 内存/gpio_hold |
 | `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位 |
-| `known-pitfalls.md` | 101 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人，症状→根因→修法 |
+| `known-pitfalls.md` | 115 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人/MicroPython 商用工程，症状→根因→修法 |
 
 </details>
 
