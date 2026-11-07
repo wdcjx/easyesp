@@ -61,11 +61,11 @@ void app_main(void)                        /* IDF 入口；app_main 运行于一
 | `idf.py partition-table` | 打印实际烧录的分区表 |
 | `idf.py reconfigure` | 仅重跑 CMake（依赖变更后刷新） |
 
-## 3. 本机环境（已核实）
+## 3. 本机环境探测（写代码前先确认）
 
-- ESP-IDF 安装：`D:\ESPIDE\Espressif\frameworks\esp-idf-v5.3.1`（版本 5.3.1；本机实测目录名 esp-idf-v5.3.1）
-- 激活：在 PowerShell/cmd 运行 `D:\ESPIDE\Espressif\idf_cmd_init.bat`，或用开始菜单「ESP-IDF 5.3 PowerShell」快捷方式；激活后 idf.py 可用
-- Espressif-IDE（Eclipse 系）工作区：`D:\ESPprojet`
+- ESP-IDF 安装位置不写死：Windows 官方安装器默认 `%USERPROFILE%\esp\`（自定义目录以实际为准）；先探测再引用路径
+- 激活：安装目录的 `idf_cmd_init.bat` / `export.ps1`，或开始菜单「ESP-IDF x.x PowerShell」快捷方式；激活后 idf.py 才在 PATH
+- Windows 系统 `python` 可能是 Microsoft Store 空壳（报 "No installed Python found!" 或商店弹窗）——跑脚本改用 IDF 自带解释器（`<安装目录>\Espressif\python_env\idf*_env\Scripts\python.exe`，具体目录名含 IDF 版本，先探测）或激活 IDF 后的 python
 
 ## 4. 错误处理范式
 
