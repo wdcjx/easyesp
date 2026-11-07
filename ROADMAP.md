@@ -118,7 +118,7 @@
 - [ ] gptimer on_alarm 回调上下文（默认中断上下文 vs dispatch 方法）验证
 - [ ] ESP-NOW 对端兼容（经典 vs S3 vs C3 混连）
 - [ ] 深睡电流与唤醒源实测（timer/EXT0/EXT1/touch/gpio）
-- [ ] Arduino 3.x LEDC/analogWrite 在已装 core 上的实际行为（本机 Arduino15 实装 2.0.11，3.x 行为未实测）
+- [ ] Arduino 3.x LEDC/analogWrite 实际行为实测（3.3.12 已由 build.yml CI 编译验证示例级代码，运行行为未实测；本机 Arduino15 实装 2.0.11）
 - [ ] validator 规则在真实工程上的误报率评估
 - [ ] BLE HID：经典 BLE 2.x（本机 core 2.0.11）在 C3 上对 iOS/Android/Windows 三平台发报告实测；onDisconnect 重广播实测（源工程已上板验证核心行为，本条为跨平台复现）
 - [ ] 实时控制：互补滤波/混控在真实 IMU（如 MPU6050）上的姿态收敛与电机响应实测（源工程已上板飞行验证，本条为跨 IMU 复现）
@@ -131,7 +131,7 @@
 
 - IDF 轨 BLE（NimBLE-IDF：GATT 自定义服务/主机扫描）——Arduino 轨 HID 已沉淀，本条只剩 IDF 轨
 - 经典蓝牙 SPP 串口透传（Arduino）
-- 以太网（LAN8720/IP101）与 Wi-Fi 共存
+- 以太网（LAN8720/IP101 RMII PHY）与 Wi-Fi 共存——W5500 SPI 以太网已由 micropython-env-controller §12 覆盖（商用上板），剩余 RMII PHY 与共存调度
 - USB Host / USB Serial JTAG 进阶
 - esp32-camera 图像采集
 - ULP RISC-V 协处理器

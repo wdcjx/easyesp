@@ -1,6 +1,6 @@
 ---
 name: easyesp
-description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA）、低功耗深睡、BLE HID 键盘（Arduino 轨经典 BLE/NimBLE）、实时控制（IMU 姿态/PID/混控/飞控安全）、IoT 网关模式（PubSubClient 生产化/多环境配置/命令分发/掉电回放）、语音 AI 助手范式（板级工厂/设备状态机/WebSocket 实时音频/唤醒词/防变砖 OTA）、MAX30102 心率血氧（寄存器序列/FIFO/心率血氧算法）、电机控制与 CAN（TWAI 总线/电压环协议/LQR/VMC 轮腿/BLE 遥控载具）、量产工程纪律（内存泄漏与碎片/栈水位/弱网限流/OTA 量产铁律/低功耗分层/量产前检查清单）、Mind+ 教育机器人扩展（MCPWM 电机 H 桥/PCNT 正交编码器/FPV 遥控 UART 协议）、MicroPython 商用工程范式（asyncio 服务化/Modbus 主从站/RS485/MQTT+Home Assistant/涂鸦 TuyaLink/规则引擎/防变砖 OTA）、RS-485 Modbus RTU 主机从零实现（帧构造/CRC16/异常码/T3.5 时序/ESP32 移植与硬件 RS485 模式）、BLE+微信小程序外设范式（GATT 单特征命令管道/小程序蓝牙 API 链/touchRead 触摸输入/CW 时序与容错窗判分）、POV 风扇屏范式（极坐标映射/WS2812 多臂 RMT/步进开环同步/软起动斜坡/tjpgd 流式解码/第三方 MQTT 云遥控）、症状速查与 153 条坑清单。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，validate_esp_generated.py 静态检查到 VIOLATION 清零（含 MANIFEST 引脚声明核对），CI 真实编译三芯片目标）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、小智、语音助手、语音交互、WebSocket、唤醒词、音频、心率、血氧、MAX30102、FOC、电机控制、CAN、TWAI、LQR、VMC、平衡车、轮腿、MPU6050、Mind+、图形化编程、MCPWM、PCNT、编码器、H 桥、FPV、瑞龙、MicroPython、mpy、Modbus、RS485、485、CRC16、变频器、Tuya、涂鸦、Home Assistant、规则引擎、asyncio、微信小程序、weapp、小程序蓝牙、GATT、CW、莫尔斯、电键、触摸键、蜂鸣器、POV、视觉暂留、风扇屏、全息风扇、WS2812、灯带、步进电机、TMC2209、量产、上线、交付、检查清单、内存泄漏、内存碎片、断点续传、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
+description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖：工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA）、低功耗深睡、BLE HID 键盘与微信小程序外设、实时控制（IMU/PID/混控/飞控）、IoT 网关、语音 AI 助手、MAX30102 心率血氧、电机控制与 CAN（TWAI/LQR/VMC）、Modbus/RS-485 主从站、Mind+ 教育机器人（MCPWM/PCNT）、POV 风扇屏、量产工程纪律（内存泄漏与碎片/OTA 铁律/检查清单）；23 份领域文档 + 153 条实战坑清单 + 症状速查 + 静态检查器（MANIFEST 引脚核对）+ CI 真实编译三芯片。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、小智、语音助手、语音交互、WebSocket、唤醒词、音频、心率、血氧、MAX30102、FOC、电机控制、CAN、TWAI、LQR、VMC、平衡车、轮腿、MPU6050、Mind+、图形化编程、MCPWM、PCNT、编码器、H 桥、FPV、瑞龙、MicroPython、mpy、Modbus、RS485、485、CRC16、变频器、Tuya、涂鸦、Home Assistant、规则引擎、asyncio、微信小程序、weapp、小程序蓝牙、GATT、CW、莫尔斯、电键、触摸键、蜂鸣器、POV、视觉暂留、风扇屏、全息风扇、WS2812、灯带、步进电机、TMC2209、量产、上线、交付、检查清单、内存泄漏、内存碎片、断点续传、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
 ---
 
 # easyesp — 嵌入式（ESP32）开发辅助技能
@@ -18,6 +18,23 @@ Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [ref
 |---|---|---|
 | **快速模式** | 用户明确要简单示例、学习验证、点灯试板 | 完整可编译代码 + 基本纪律（等待带超时、ISR 短小、栈够大） |
 | **纪律模式（默认）** | 正式工程代码；用户提到 规范/纪律/审查/检查/validate/上产品；或未指明 | 全部硬约束 + validate 清零 + 坑位申报 + 完整交付物 |
+
+## 工程原型 → 文档组合（按项目类型一次配齐；顺序即读取顺序）
+
+| 工程原型 | 必读 | 按需加读 | 主要坑段 |
+|---|---|---|---|
+| WiFi 设备上云（STA + MQTT/HTTP） | esp-idf-basics → wifi-networking | iot-gateway-patterns（生产化网关）、production-readiness（上线） | 实战类 #36–53、量产类 #82–93 |
+| BLE 外设（HID 键盘/小程序遥控/GATT 自定义） | arduino-track → ble-hid-arduino（HID）或 ble-weapp-morse-trainer（小程序） | isr-and-concurrency-rules（回调纪律） | 实战类 #36–53、小程序类 #125–138 |
+| 实时控制（飞控/平衡车/电机/CAN） | realtime-control → motor-control-foc | freertos-on-esp32（核绑定/优先级）、isr-and-concurrency-rules | 电机类 #72–81 |
+| Modbus/RS-485（主机采集/变频器电表） | modbus-rtu-485 | micropython-env-controller §5–§7（从站与云侧对照）、peripheral-recipes（UART） | Modbus 类 #116–124 |
+| MicroPython 整机固件 | micropython-env-controller | —（轨内自带全栈；无静态检查，人工按其 §2 纪律核对） | MicroPython 类 #102–115 |
+| 传感器节点（I2C/ADC/心率血氧） | peripheral-recipes → sensor-max30102 | power-and-sleep（电池供电） | 传感器类 #54–61 |
+| 低功耗电池设备 | power-and-sleep → chip-family-notes（唤醒源差异） | production-readiness（功耗分层） | 基础类 #1–35 相关条 |
+| 显示/灯效（WS2812/POV/步进同步） | pov-fan-display | mindplus-robot-ext §2（MCPWM）、peripheral-recipes（RMT/LEDC） | POV 类 #139–153、教育机器人类 #94–101 |
+| 语音 AI 助手（唤醒词/实时音频） | voice-assistant-xiaozhi | wifi-networking（OTA/弱网） | 语音 AI 类 #62–71 |
+| 上板排障（死机/重启/连不上/偶发异常） | symptom-quickref（三步法 + #1–153 全量映射） | known-pitfalls 对应编号条目 | 按映射定位 |
+
+原型只决定读哪些文档；生成代码仍按下方工作流程走（引脚分配表 + MANIFEST、validator 清零）。
 
 ## 工作流程
 
