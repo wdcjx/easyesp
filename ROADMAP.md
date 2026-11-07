@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller）八份文档与坑清单 #36–81、#94–115，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu）九份文档与坑清单 #36–81、#94–124，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -74,6 +74,14 @@
 | MicroPython 商用工程范式 | `references/micropython-env-controller.md` | 源自 env-controller v1.5.1-beta（已上板商用部署；ESP32-S3 N16R8，自编译 MicroPython v1.28，16MB flash+8MB PSRAM）：asyncio 10 服务化骨架（SERVICES+create_task+done_callback）、main.py 别名技巧、GC threshold 小步策略、IOQueue monkey-patch、配置驱动 Modbus 主站（指令-通道 schema/符号扩展纪律/UART 自愈）、RTU 从站+TCP 防冻（单任务非阻塞 socket）、自写 MQTT 3.1.1（umqtt bug 规避）、HA Discovery 生命周期（ha_disc.json diff+空 retain）、涂鸦 TuyaLink 直连（HMAC 一机一密/物模型缓存）、规则引擎（滞回/边沿/稳定 id）、配置三轨（NVS/flash JSON/engineer 白名单）、防变砖 OTA（tar 校验链+.mpy v6 绑定+回滚）、W5500 全链路 C 下沉（_spi_keep 防 GC）、C_MIGRATION 结论（渐进下沉不全迁） |
 | 坑清单 MicroPython 商用类 102–115 | `references/known-pitfalls.md` | microdot body 上限/IOQueue 崩事件循环/大 GC 停顿/SPI 被 GC 析构/RS485 DE 时序/帧空闲判定/写回显误判/Modbus-TCP 连断风暴冻结/u16 符号扩展/asyncio.sleep 单例被吞/import main 重执行/.py 优先 .mpy/MQTT 认证+假死/OTA 变砖链，共 14 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（MicroPython/mpy/Modbus/RS485/Tuya/涂鸦/Home Assistant/规则引擎/asyncio）、计数 101→115、README 20 份、实战文档 7→8 份；双轨之外补 MicroPython 第三轨范式 |
+
+## 已沉淀（第九轮：RS-485 Modbus RTU 主机库）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| RS-485 与 Modbus RTU 主机 | `references/modbus-rtu-485.md` | 源自 tiny485-mbrtu v1.0（ZeroOneLab/MIT，STM32F103ZE+MAX485 已上板；ESP32 移植段为文档新写未编译）：三层架构与 6 函数移植面、RTU 协议事实速查表（帧/CRC16 0xA001 低在前/功能码/异常码/T3.5/T1.5/8E1 规范 vs 8N1 事实）、核心层精读（crc16 位算法/溢出整包丢弃/无符号回绕安全）、ESP-IDF 双方案（UART_MODE_RS485_HALF_DUPLEX 硬件方向 vs 手动 DE+uart_wait_tx_done 铁律）、事件队列任务替代中断回调、wait_data 改造版（字节间隔判帧完+vTaskDelay）、Arduino 轨（flush 语义）、与 env-controller 取舍表、可复用模式 7 条 |
+| 坑清单 Modbus 主机类 116–124 | `references/known-pitfalls.md` | 忙等烧满超时+无 yield/64B 缓冲溢出伪装 TIMEOUT（README"≤123"与规范 125 不符）/ERR_PARAM 从不返回/lun 越界写/DE 拉低截尾（write_bytes 仅入队）/溢出后半帧当新帧/广播写误报超时/DE与RE 接法决定回显/DE 建立延时写死 1ms，共 9 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（485/CRC16/变频器）、计数 115→124、README 21 份、实战文档 8→9 份 |
 
 ## 待验证（首个实测工程时逐项确认并回写）
 
