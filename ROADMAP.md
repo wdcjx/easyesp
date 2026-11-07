@@ -110,7 +110,7 @@
 
 ## 待验证（首个实测工程时逐项确认并回写）
 
-- [ ] `idf.py build` 编译通过（模板/示例）：IDF 5.3.1 实际编译暴露的 API 拼写与头文件问题（build.yml CI 已对 blink_uart_demo 三目标真实编译，首跑结果回写此处；模板暂不在 CI 编译范围）
+- [x] `idf.py build` 编译通过（示例）：build.yml 首跑（commit 181be9a，2026-11-07）esp32/S3/C3 三目标全绿，Arduino 三板（core 3.3.12）全绿；模板暂不在 CI 编译范围，保留待验证
 - [ ] IRAM_ATTR ISR 与 flash 写（NVS）交叉运行不 crash
 - [ ] I2C 新驱动（`i2c_master.h`）在目标芯片上的实际行为与超时参数
 - [ ] ADC oneshot + 校准（line fitting）实测值
