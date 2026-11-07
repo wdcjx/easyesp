@@ -6,7 +6,7 @@
 CI 中由 .github/workflows/ci.yml 调用，exit 0 = 全部通过。
 
 检查项：
-  1. validator 十样本基线（四 bad_sample 必须 FAIL 且违规/警告数精确匹配，
+  1. validator 十一样本基线（五 bad_sample 必须 FAIL 且违规/警告数精确匹配，
      六正例必须 PASS 且违规=0）——防规则漂移（误报/漏报都会被抓住）
   2. references/ 目录与 SKILL.md 资源表双向一致（表里有的文件必须存在；
      目录里的文档必须都在表中）
@@ -32,6 +32,7 @@ BASELINE = [
     ('tests/bad_sample_task.c',                      'FAIL', 4,  2),
     ('tests/bad_sample_ble.cpp',                     'FAIL', 5,  1),
     ('tests/manifest_bad_sample.c',                  'FAIL', 2,  1),
+    ('tests/bad_sample_rs485.c',                     'FAIL', 1,  1),
     ('tests/good_sample_ble.cpp',                    'PASS', 0,  0),
     ('tests/manifest_good_sample.c',                 'PASS', 0,  0),
     ('templates/main_idf.c',                         'PASS', 0,  0),

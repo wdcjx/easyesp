@@ -27,7 +27,7 @@ validate_esp_generated.py — ESP32（ESP-IDF / Arduino）生成代码工程纪�
     无 MANIFEST 的文件跳过全部 M 系列检查（向后兼容）。
   - 自测：python validate_esp_generated.py ../tests/bad_sample_isr.c ../tests/bad_sample_task.c
     应报多条 VIOLATION；../templates/main_idf.c 应 PASS。
-    基线回归以 scripts/ci_check.py（十样本）为准。
+    基线回归以 scripts/ci_check.py（十一样本）为准。
 """
 
 import argparse
@@ -128,6 +128,29 @@ TASKCB_BLOCK_RE = re.compile(
 )
 
 ARDUINO_BAN_CALL_RE = re.compile(r"(?i)\b(delay|delayMicroseconds|yield|vTaskDelay)\s*\(")
+
+# ---- R12: legacy 驱动 API 弃用线（IDF 5.2+ 新驱动已定稳；坑 #101 家族）----
+# 注意：#include "driver/i2c.h" 的引号字符串已被 neutralize 抹掉，角括号形式才可见；
+# 调用点才是主证据（真实 legacy 用法必然出现这些调用）。
+LEGACY_INCLUDE_RE = re.compile(
+    r"#\s*include\s*<\s*(driver/(?:i2c|mcpwm|timer|rmt)\.h)\s*>"
+)
+LEGACY_CALL_RES = [
+    re.compile(r"\bi2c_(?:param_config|driver_install|cmd_link_create|cmd_link_delete|"
+               r"master_cmd_begin|master_write_to_device|master_read_from_device)\b"),
+    re.compile(r"\bmcpwm_(?:gpio_setup|init)\b"),
+    re.compile(r"\bpcnt_(?:unit_config|set_filter_value\w*)\b"),
+    re.compile(r"\btimer_(?:init|start|stop|pause|set_alarm\w*|get_counter_value\w*)\b"),
+    re.compile(r"\brmt_config\b"),
+    re.compile(r"\badc[12]_config_(?:channel_atten|width)\b"),
+]
+# 新驱动对照：i2c→driver/i2c_master.h、timer→driver/gptimer.h、rmt→driver/rmt_tx.h、
+# mcpwm→driver/mcpwm_pwm.h、pcnt 同头文件内 pcnt_new_unit、adc→esp_adc/adc_oneshot.h
+
+# ---- R13: RS-485 手动 DE 方向控制时序（坑 #120 家族）----
+# DE 引脚命名启发（token 匹配，大小写不敏感）：rs485_de_pin / DE_PIN / dir_pin 等
+RS485_DE_TOKENS = {"rs485", "de", "dir"}
+RS485_HW_MODE_MARK = "UART_MODE_RS485_HALF_DUPLEX"  # 硬件自动方向，无需手动 DE
 
 # ---- EASYESP MANIFEST V1（C 注释内嵌声明块；stdlib 手解析，不引 PyYAML）----
 MANIFEST_HEAD_RE = re.compile(
@@ -535,6 +558,53 @@ def analyze(path, text, findings, irq_owner, project):
                 "检测到 ledcSetup/ledcAttachPin（core 2.x API）：arduino-esp32 3.x 已改为 "
                 "ledcAttach(pin,freq,res)+ledcWrite(pin,duty)，按已装 core 大版本核对"
                 "（见 references/arduino-track.md 迁移表）")
+
+    # ---- R12: legacy 驱动 API（坑 #101 家族；WARN 按文件汇总一条）----
+    legacy_hits = []
+    im = LEGACY_INCLUDE_RE.search(text)
+    if im:
+        legacy_hits.append((im.start(), im.group(1)))
+    for lr in LEGACY_CALL_RES:
+        for cm in lr.finditer(text):
+            legacy_hits.append((cm.start(), cm.group(0)))
+    if legacy_hits:
+        legacy_hits.sort()
+        names = []
+        for _, n in legacy_hits:
+            if n not in names:
+                names.append(n)
+        add(line_of(text, legacy_hits[0][0]), WARN,
+            "检测到 legacy 驱动 API：" + "、".join(names[:6])
+            + (" 等" if len(names) > 6 else "")
+            + "——IDF 5.2+ 新驱动已定稳（i2c→driver/i2c_master.h、timer→gptimer.h、"
+              "rmt→rmt_tx.h、mcpwm→mcpwm_pwm.h、pcnt 同头文件 pcnt_new_unit、"
+              "adc→esp_adc/adc_oneshot.h）：新代码一律用新 API（坑 #101，对照 "
+              "references/peripheral-recipes.md / esp-idf-basics.md）")
+
+    # ---- R13: RS-485 手动 DE 时序（坑 #120：write_bytes 只入队，DE 早拉低截尾）----
+    if RS485_HW_MODE_MARK not in text:
+        for f in funcs:
+            body = f["body"]
+            wr = re.search(r"\buart_write_bytes\s*\(", body)
+            if not wr or "uart_wait_tx_done" in body:
+                continue
+            for dm in re.finditer(r"\bgpio_set_level\s*\(", body):
+                if dm.start() < wr.start():
+                    continue
+                op = dm.end() - 1
+                cp = match_paren(body, op)
+                args = split_top_args(body[op + 1: cp])
+                if len(args) < 2 or args[1].strip() != "0":
+                    continue
+                tokens = {t.lower() for t in re.split(r"[^A-Za-z0-9]+", args[0]) if t}
+                if tokens & RS485_DE_TOKENS:
+                    add(line_of(text, f["open"] + 1 + dm.start()), VIOL,
+                        f"'{f['name']}' 中 uart_write_bytes 后未 uart_wait_tx_done 就把 DE"
+                        f"（{args[0].strip()}）拉低：uart_write_bytes 只是把数据入队就返回，"
+                        "末尾字节还没移出移位寄存器，DE 一低接收方读到截断帧（坑 #120）。"
+                        "先 uart_wait_tx_done(UART_NUM_x, pdMS_TO_TICKS(100)) 再拉低 DE，"
+                        "或改 UART_MODE_RS485_HALF_DUPLEX 由硬件自动控制方向")
+                    break
 
     # ---- 铁律 B: 任务上下文回调禁阻塞 ----
     for f in cb_funcs:

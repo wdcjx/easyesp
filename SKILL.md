@@ -95,7 +95,7 @@ Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [ref
 | `templates/main_idf.c` | IDF 裸机骨架（app_main+NVS+日志+非阻塞主循环） |
 | `templates/sdkconfig.defaults` | sdkconfig 基线（日志级别/采样率/看门狗等约定项） |
 | `templates/main_arduino.ino` | Arduino 副轨骨架（setup/loop+FreeRTOS 任务示例） |
-| `scripts/validate_esp_generated.py` | 静态纪律检查（VIOLATION 清零才交付；含 EASYESP MANIFEST V1 引脚声明核对；厂商目录自动跳过） |
+| `scripts/validate_esp_generated.py` | 静态纪律检查（VIOLATION 清零才交付；含 EASYESP MANIFEST V1 引脚声明核对、legacy 驱动 API 警告、RS-485 DE 时序；厂商目录自动跳过；MicroPython 轨无静态检查，人工按 references/micropython-env-controller.md §2 纪律核对） |
 | `examples/blink_uart_demo/` | 完整可编译 IDF 试例：点灯+日志（未上板） |
 | `tests/bad_sample*.c*` | 故意违规样本（含 BLE 反例/正例 .cpp），自测检查脚本用 |
 

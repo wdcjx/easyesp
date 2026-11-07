@@ -106,6 +106,7 @@
 | 真实编译 CI | `.github/workflows/build.yml` | IDF job：espressif/idf:v5.3.1 容器 idf.py build（esp32/S3/C3 三目标 × blink_uart_demo）；Arduino job：arduino-cli 1.5.1 + esp32 core 3.3.12 双锁版本三块板编译 arduino_blink_uart；月度 cron 检测上游漂移（XRobot PkgKit 的 CI 手法移植，弃其浮动 tag 反例） |
 | MANIFEST 引脚声明核对 | `scripts/validate_esp_generated.py` | 新增 M 系列规则：`/* === EASYESP MANIFEST V1 === */` C 注释声明块（target/pins）→ target 合法性、芯片 GPIO 存在性（esp32 上限 39 且 20/24/28-31 不存在；S3 上限 48、22-25 不引出；C3 上限 21、11-19 受限）、一脚一功能、实际用脚全入表；无声明块的文件跳过（向后兼容）。源自 XRobot manifest-in-header 思想的 C 轨移植 |
 | 自测基线 7→10 样本 | `scripts/ci_check.py` + `tests/manifest_good_sample.c` / `tests/manifest_bad_sample.c` + `examples/arduino_blink_uart/` | MANIFEST 正例（C3 声明一致 → PASS V0W0）/反例（同脚双功能+超上限+未声明 → FAIL V2W1）；Arduino 最小 sketch 入正例基线 |
+| R12/R13 检查规则 | `scripts/validate_esp_generated.py` + `tests/bad_sample_rs485.c` | R12 legacy 驱动 API 警告（i2c/mcpwm/pcnt/timer/rmt/adc 旧调用与旧 include，坑 #101 家族）；R13 RS-485 手动 DE 时序（uart_write_bytes 后未 uart_wait_tx_done 即拉低 DE → VIOLATION，坑 #120 截尾帧）；基线 10→11 样本（FAIL V1W1 精确命中），旧样本零回归 |
 | 单一事实源纪律 | `templates/main_idf.c` + `SKILL.md` | 模板头部带 MANIFEST 声明块；工作流第 2 步明确"分配表落进代码头部声明块，检查器核对声明与代码一致" |
 
 ## 待验证（首个实测工程时逐项确认并回写）
