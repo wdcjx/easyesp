@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp）十份文档与坑清单 #36–81、#94–138，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen）十一份文档与坑清单 #36–81、#94–153，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -90,6 +90,14 @@
 | BLE+小程序外设实战 | `references/ble-weapp-morse-trainer.md` | 源自 cw_esp32_ble_weapp v0.0.3（作者已上板多年，B 站三视频演示；本文为源码转写未二次复测）：瘦设备+胖网关分层（ESP32 零 WiFi/MQTT，小程序持云端）、小程序蓝牙 API 链与 iOS/Android deviceId 差异、GATT 单特征四属性命令管道（含冒号分割器越界写栈实证 bug）、Bluedroid 骨架+断连重广播修复版、CW 时序参数体系与两次空格状态机、地狱模式容错窗公式、touchRead 触摸键（经典专属，S3/C3 无）、EEPROM 定长记录+magic 首启 vs Preferences、core 3.x ledc/NimBLE 迁移线 |
 | 坑清单 BLE 小程序外设类 125–138 | `references/known-pitfalls.md` | 断连不重启广播永久失联/onWrite 内阻塞播放卡 BLE 栈/手动键上拉靠自动键副作用/GPIO0 strapping 做按键/touchRead 偶发 0（二次读防御）/共享全局 String 无锁/ble_send 声明定义签名漂移/每参数一次 EEPROM 全量 commit/定长 5 字符截断/play_code 变量错位（s_split_time 失效）/分割器越界写栈/自捶 delay 阻塞无 iambic/setMinPreferred 后者覆盖/String 码表堆碎片，共 14 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（微信小程序/weapp/GATT/CW/莫尔斯/电键/触摸键/蜂鸣器）、计数 124→138、README 22 份、实战文档 9→10 份、symptom-quickref §9.9（125–138） |
+
+## 已沉淀（第十一轮：POV 裸眼 3D 风扇屏）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| POV 风扇屏实战 | `references/pov-fan-display.md` | 源自 3-d-bare-eye-fan-screen v1.0（2023，GPL-3.0，ESP32-S3 N16R8+TMC2209+WS2812×4 臂+MAX98357，作者已上板，B 站 BV1tN411y7ZS；本文为源码转写未二次复测）：POV 极坐标映射数据模型（200 角/圈×80 半径×4 臂 90° 偏移）/步进开环同步（100kHz 定时器 ISR 直写 GPIO 寄存器+num%speed 分频+每 8 脉冲进角）/软起动 0.9^N 斜坡防失步/WS2812 四通道 RMT/vendored led_strip 魔改非阻塞 refresh/tjpgd ROM 流式解码（含整数除法亮度缩放恒 0 实证 bug）/视频 OpenCV 离线预解为极坐标帧文件/MQTT topic 表与**大载荷分块陷阱**（1024B buffer 分块交付被逐块覆盖写）/HTTP 8080 路径穿越+CORS\*/三处明文账密/IDF 4.4.4→5.3 迁移表（legacy i2s/rmt/timer/事件循环） |
+| 坑清单 POV 风扇屏类 139–153 | `references/known-pitfalls.md` | C 整数除法亮度缩放恒 0（PC float 语义漂移）/空文件系统裸 fopen 首启崩/feof 先判后读多计一帧/MQTT 分块覆盖写大文件必坏/publish 超 out_buffer 静默丢/路径穿越+CORS\* 无认证/公网明文账密三处泄露/100kHz ISR 非幂二模除/上下拉同开/BGR-RGB 换序/000%d 文件名漂移/固定尺寸缓冲越界/44100+44 头写死/455KB EMBED 死资源/魔改组件全局 tick 共享，共 15 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（POV/视觉暂留/风扇屏/全息风扇/WS2812/灯带/步进电机/TMC2209）、计数 138→153、README 23 份、实战文档 10→11 份、symptom-quickref §9.10（139–153） |
 
 ## 待验证（首个实测工程时逐项确认并回写）
 

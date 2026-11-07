@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–138 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库与 BLE 小程序外设）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–153 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设与 POV 风扇屏）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -260,5 +260,23 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 136 | 【CW】自动键无法实现 iambic（交替补码）节奏，双桨同按只出机械交替 | 自捶用阻塞 `delay(s_u_time)`：按住期间 loop 停转，读不到另一桩状态变化，无从记忆 | 按键采集事件化（轮询+沿检测或中断置标志），时序用 esp_timer/gptimer 周期回调驱动蜂鸣 |
 | 137 | 【BLE】想缩短连接间隔降低延迟，写了两个 setMinPreferred 却只生效一个 | `setMinPreferred(0x06)` 后紧跟 `setMinPreferred(0x12)`，后者覆盖前者；两行均出自官方示例的复制粘贴（单位 1.25ms） | 只保留一个目标值；连接参数协商最终以从机（手机 OS）策略为准，设置仅是建议 |
 | 138 | 【内存】长时间键入练习后 BLE 发送变慢/偶丢，堆碎片化 | 39 元素 String 码表常驻堆 + `info[p] += msg[i]` 类逐字符 String 拼接高频分配释放；经典 128KB 板不致命，小 RAM/OTA 场景放大 | 码表改 `const char*` 数组；协议解析用定长 char 缓冲；BLE 热路径避免 String（本 skill 纪律 §内存） |
+
+## POV 风扇屏/WS2812 阵列类（139–153）
+
+| 139 | 【显示】POV 屏上传 JPEG 后画面全黑，视频模式却正常 | 亮度缩放 `outData[p]*（j+3)/300` 在 C 里是整数除法，j≤79 时恒为 0；PC 原型 Python 同公式是 float 除法——跨语言移植语义漂移 | 缩放系数先算成 float 再取整，或把除数改成位移/查表；移植数值公式时逐条核对除法语义（见 pov-fan-display.md §5） |
+| 140 | 【启动】全新 flash 首次开机直接 Guru/复位，再烧一次同样崩 | littlefs `format_if_mount_failed=true` 格出空文件系统，`fopen("/littlefs/imgarrays")` 返回 NULL 未检查，`fread(NULL)` 崩在 app_main | 所有 fopen 必查返回值；首次启动检测关键文件缺失时进安全模式（黑屏+默认图案）而非裸崩 |
+| 141 | 【视频】帧数统计总比实际多一，播放尾部多一帧黑屏/花屏 | `while(!feof(f))` 先判后读：EOF 要在读失败后才置位，末尾空读也 `video_page++`；`video_task` 的 `for(i<video_page-2)` 魔法 -2 就是补偿产物 | 循环条件用 `fread(...) == 48000` 的返回值；删除一切「魔法偏移」补偿，计数与真实读数对齐 |
+| 142 | 【MQTT】>1KB 的 MQTT 消息收到的文件永远只有最后一小段/损坏 | esp-mqtt 默认 buffer 1024，大消息分多个 MQTT_EVENT_DATA 事件（current_data_offset/total_data_len）；代码忽略分块字段且每事件 `fopen("w")` 覆盖写，最后分块覆盖前面全部 | 按 `current_data_offset==0` 开文件、追加写、`offset+len==total` 才关；或 `mqtt_cfg.buffer.size` 调大到消息上限（见 pov-fan-display.md §7） |
+| 143 | 【MQTT】设备回发大 JPEG 给 APP，APP 收到截断或直接收不到 | `esp_mqtt_client_publish` 单次发 20000B 超出默认 out_buffer，返回 -1 静默丢弃；代码不查返回值 | publish 检查返回值；大文件分片（topic 带序号）或改 HTTP 下发；esp-mqtt 不保证应用层分片 |
+| 144 | 【Web】任意人访问 `/readfile?name=../../x` 能读设备任意文件、/delfile 删任意文件 | `name` 查询参数 sprintf 直拼路径零过滤 + 所有 handler CORS `*` 无认证 | 文件名白名单正则（如 `^[0-9]{4}\.jpeg$`）；跨网服务加 token；绝不对外暴露任意路径读写 |
+| 145 | 【安全】公网任何人都能遥控你的设备（电机启停/文件增删） | broker 地址+账号密码硬编码在固件源码，同一账密还预填在 APP HTML input value 里；topic 无设备级隔离 | 一机一密+设备随机 ID 进 topic（参考 micropython-env-controller.md §7）；账密绝不进 HTML/源码明文 |
+| 146 | 【ISR】高速定时器 ISR（100kHz）CPU 占用异常高；照示例把"秒"传给初始化函数却得到 µs 级中断 | ISR 内 `num % speed` 非幂二模除每 tick 一次；`timer_interval_sec` 形参名与实义（原始 alarm tick）不符，示例注释系统性撒谎 | 模除改递减计数器（`if(--cnt==0){cnt=speed;…}`）；读 API 先看参数换算代码而非参数名 |
+| 147 | 【GPIO】输出脚电平抖动/驱动无力，万用表量到中间电平 | `gpio_config_t` 同时 `pull_down_en=1` 且 `pull_up_en=1`，上下拉打架（源工程原样复制） | 输出脚两个都关；输入脚按实际需要开且只开一个 |
+| 148 | 【LED】多条 WS2812 灯带用不同 RMT 分频后时序全乱/带间闪烁 | vendored led_strip 组件把 t0h/t1l tick 存全局变量，4 条带共享；同 clk_div 侥幸无害，一旦某条改分频即互相覆盖 | 每条带独立配置实例；IDF 5.x 用官方 led_strip 组件 per-device 配置；魔改第三方组件前先审全局态 |
+| 149 | 【显示】POV 显示的红蓝与原图对调（视频/图片均如此，未上板复测，以实物为准） | OpenCV `frame.tobytes()` 是 BGR 序，固件按 (R,G,B) 参数序喂 `set_pixel`，组件再按 GRB 排线——两次换序疑似差一次 | 离线导出前 `cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)`；固件端统一约定并写进数据格式文档 |
+| 150 | 【文件】图片存到第 10 页后再也调不出来 | 上传端 `sprintf("000%d.jpeg", page)`：第 10 页存成 `00010.jpeg`；解码端 switch case 10 硬编码打开 `0010.jpeg`——同一编号两套文件名 | 文件名统一 `sprintf("%04d.jpeg", n)` 生成与解析；禁止 switch 硬编码路径与生成式并存 |
+| 151 | 【解码】上传 336×256 或 >20KB 的 JPEG 后花屏/堆损坏 | `image_data[20000]` 固定读 20000B 截断大图；`outData=malloc(160*160*3)`、outW/outH 写死 160，非 160×160 图的 rect 增量写出界 | 上传前限制尺寸与体积（PC 端缩放）；或按 tjpgd_prepare 返回的实际宽高分配 outData |
+| 152 | 【音频】播放 8kHz/22.05kHz 的 wav 变声快放；某些 wav 头几毫秒杂音 | I2S 速率写死 44100、`data+44` 假定 44 字节标准头，都不解析 wav fmt chunk | 解析 wav 头取真实 sample_rate/data 偏移；或统一离线转码 44100/16bit/mono 再上传 |
+| 153 | 【构建】app 分区莫名紧张，1600K 放不下固件 | `EMBED_FILES "123.wav"` 把 455KB 音频链进 app 镜像，而运行时只用 littlefs 里的 music.wav（嵌入版只活在注释代码） | 用户可换资源放文件系统；EMBED 只留 bootloader 必需资产；定期 `idf.py size` 审计各段 |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。
