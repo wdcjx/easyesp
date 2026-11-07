@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu）九份文档与坑清单 #36–81、#94–124，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp）十份文档与坑清单 #36–81、#94–138，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -82,6 +82,14 @@
 | RS-485 与 Modbus RTU 主机 | `references/modbus-rtu-485.md` | 源自 tiny485-mbrtu v1.0（ZeroOneLab/MIT，STM32F103ZE+MAX485 已上板；ESP32 移植段为文档新写未编译）：三层架构与 6 函数移植面、RTU 协议事实速查表（帧/CRC16 0xA001 低在前/功能码/异常码/T3.5/T1.5/8E1 规范 vs 8N1 事实）、核心层精读（crc16 位算法/溢出整包丢弃/无符号回绕安全）、ESP-IDF 双方案（UART_MODE_RS485_HALF_DUPLEX 硬件方向 vs 手动 DE+uart_wait_tx_done 铁律）、事件队列任务替代中断回调、wait_data 改造版（字节间隔判帧完+vTaskDelay）、Arduino 轨（flush 语义）、与 env-controller 取舍表、可复用模式 7 条 |
 | 坑清单 Modbus 主机类 116–124 | `references/known-pitfalls.md` | 忙等烧满超时+无 yield/64B 缓冲溢出伪装 TIMEOUT（README"≤123"与规范 125 不符）/ERR_PARAM 从不返回/lun 越界写/DE 拉低截尾（write_bytes 仅入队）/溢出后半帧当新帧/广播写误报超时/DE与RE 接法决定回显/DE 建立延时写死 1ms，共 9 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（485/CRC16/变频器）、计数 115→124、README 21 份、实战文档 8→9 份 |
+
+## 已沉淀（第十轮：BLE + 微信小程序外设）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| BLE+小程序外设实战 | `references/ble-weapp-morse-trainer.md` | 源自 cw_esp32_ble_weapp v0.0.3（作者已上板多年，B 站三视频演示；本文为源码转写未二次复测）：瘦设备+胖网关分层（ESP32 零 WiFi/MQTT，小程序持云端）、小程序蓝牙 API 链与 iOS/Android deviceId 差异、GATT 单特征四属性命令管道（含冒号分割器越界写栈实证 bug）、Bluedroid 骨架+断连重广播修复版、CW 时序参数体系与两次空格状态机、地狱模式容错窗公式、touchRead 触摸键（经典专属，S3/C3 无）、EEPROM 定长记录+magic 首启 vs Preferences、core 3.x ledc/NimBLE 迁移线 |
+| 坑清单 BLE 小程序外设类 125–138 | `references/known-pitfalls.md` | 断连不重启广播永久失联/onWrite 内阻塞播放卡 BLE 栈/手动键上拉靠自动键副作用/GPIO0 strapping 做按键/touchRead 偶发 0（二次读防御）/共享全局 String 无锁/ble_send 声明定义签名漂移/每参数一次 EEPROM 全量 commit/定长 5 字符截断/play_code 变量错位（s_split_time 失效）/分割器越界写栈/自捶 delay 阻塞无 iambic/setMinPreferred 后者覆盖/String 码表堆碎片，共 14 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（微信小程序/weapp/GATT/CW/莫尔斯/电键/触摸键/蜂鸣器）、计数 124→138、README 22 份、实战文档 9→10 份、symptom-quickref §9.9（125–138） |
 
 ## 待验证（首个实测工程时逐项确认并回写）
 
