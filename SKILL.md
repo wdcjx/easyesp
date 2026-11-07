@@ -88,7 +88,7 @@ Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [ref
 | `references/micropython-env-controller.md` | MicroPython 商用工程范式（env-controller 转写）：asyncio 服务化/Modbus 主从站/RS485/MQTT+Home Assistant/涂鸦 TuyaLink/规则引擎/W5500/防变砖 OTA |
 | `references/modbus-rtu-485.md` | RS-485 与 Modbus RTU 主机从零实现（tiny485-mbrtu 转写）：协议事实速查/CRC16/ESP-IDF 与 Arduino 双轨移植（硬件 RS485 模式 vs 手动 DE） |
 | `references/power-and-sleep.md` | 低功耗场景：深睡范式/唤醒源/RTC_DATA_ATTR/收尾清单 |
-| `references/symptom-quickref.md` | 故障排查：Guru Meditation 解码/addr2line/WDT 报文/复位原因 |
+| `references/symptom-quickref.md` | 故障排查：Guru Meditation 解码/addr2line/WDT 报文/复位原因 + 症状→编号全量映射（§8 基础类 1–35 / §9 实战工程类 36–124） |
 | `references/known-pitfalls.md` | 纪律模式坑位申报：124 条 症状/根因/修法（含实战项目类 36–53、传感器类 54–61、语音 AI 类 62–71、电机控制类 72–81、量产手册类 82–93、教育机器人类 94–101、MicroPython 商用类 102–115、Modbus 主机类 116–124） |
 | `templates/main_idf.c` | IDF 裸机骨架（app_main+NVS+日志+非阻塞主循环） |
 | `templates/sdkconfig.defaults` | sdkconfig 基线（日志级别/采样率/看门狗等约定项） |

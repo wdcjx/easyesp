@@ -1,13 +1,13 @@
 # 症状速查（看到什么报文→先查什么）
 
 > 何时读：拿到错误日志/异常复位现象，先用本文把报文翻译成排查方向，再跳 known-pitfalls.md 对应编号。
-> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–124 全量：基础类见 §8，实战工程类（#36–124，含 MicroPython / Modbus）见 §9
 
 ## 1. 排查方法论（三步）
 
 1. 查复位原因：app_main 早段打印 `esp_reset_reason()`，按 §2 表翻译；配合串口首行 ROM 输出如 `rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)`、`rst:0xc (SW_CPU_RESET)`（码以官方文档为准）。
 2. 读日志结构：`E (356742) wifi: xxx` = 级别（启动以来毫秒）TAG: 内容。E>Error W>Warn I>Info，D/V 递减；TAG 指明出错组件栈；时间戳判断周期/风暴/时长。
-3. 按 §3–§7 对号定位方向，最终落到 known-pitfalls.md 编号（§8 总表）。
+3. 按 §3–§7 对号定位方向，最终落到 known-pitfalls.md 编号（§8 基础类总表 / §9 实战工程类总表）。
 
 ## 2. esp_reset_reason_t 全表（esp_reset_reason.h）
 
@@ -137,7 +137,9 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 
 - 断连重连范式（DISCONNECTED 里 esp_wifi_connect）见 pitfall 27；MQTT 截断见 28。
 
-## 8. 一页总表（症状关键词 → 先查 → pitfall 编号）
+## 8. 一页总表·基础类（症状关键词 → 先查 → pitfall 编号，#1–35）
+
+> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9。
 
 | 症状关键词 | 先查 | pitfall |
 |---|---|---|
@@ -171,3 +173,136 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 | Windows 构建随机错 | 纯 ASCII 无空格路径 | 33 |
 | ledcSetup 未定义 | Arduino 3.x 新 LEDC API | 34 |
 | 注释/字符串乱码 | 统一 UTF-8 | 35 |
+
+## 9. 一页总表·实战工程类（症状关键词 → 先查 → pitfall 编号，#36–124）
+
+与 known-pitfalls.md 类目一一对应；症状关键词取自各坑首栏，详见对应编号行。
+
+### 9.1 BLE HID / 飞控 / IoT 网关（36–53，源：ble-hid-arduino / realtime-control / iot-gateway-patterns）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| BLE 断连后手机再也搜不到设备 | onDisconnect 重启广播 | 36 |
+| HID 报告换台手机失灵 | REPORT_ID 约定两侧统一 | 37 |
+| 节拍器/周期任务越跑越偏 | 增量对拍替代 delay | 38 |
+| 按键按一下对端连发多次 | 沿检测＋一次性标志 | 39 |
+| 媒体键（播放/音量）无效 | 独立 Consumer 报告 | 40 |
+| 软 I2C OLED 花屏/半屏 | 硬件 Wire 或开漏+ACK | 41 |
+| 切模式后原按键"卡住" | 切换前发全零报告 | 42 |
+| 换 IMU/改朝向姿态疯转 | 轴映射行重写+物理验证 | 43 |
+| 飞行中调参瞬间抽动掉高 | 飞行态禁写 NVS | 44 |
+| 加油门瞬间复位循环 brownout | 电源余量/母线电容 | 45 |
+| 单电机测试转时不转 | 改占空前等 PWM 周期 | 46 |
+| QGC 连不上飞控 WiFi | 固件定期广播心跳 | 47 |
+| 悬停缓慢漂移 | landed 才做加计校正 | 48 |
+| PubSubClient 发大 JSON 失败 | setBufferSize ≥消息+512B | 49 |
+| publish 返回 1 但服务器没收到 | 发布防御四连 | 50 |
+| 连续 49.7 天后 TTL 全错乱 | 无符号差值判周期 | 51 |
+| 服务器拒收多空字段 JSON | 空字段发 null/降平面格式 | 52 |
+| DNS 正常但 MQTT 连不上 | 预解析+TCP 探活绕域名 | 53 |
+
+### 9.2 传感器 MAX30102（54–61，源：sensor-max30102）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| MPY 固件指位恒 0"未检测到手指" | 读数移位量纲 ÷8 | 54 |
+| I2C 无 ACK / Sensor connection failed | scan() 应见 0x57 | 55 |
+| 波形断续、脉冲缺拍 | FIFO 批量读+OVF 检查 | 56 |
+| BPM 乱跳偶发尖峰 | 滤波后找峰+RR 中值 | 57 |
+| SpO2 周期性跳 0 | 有效窗判定+剔野 | 58 |
+| 自改采样率后心率血氧全乱 | 锁定 50Hz 有效输出 | 59 |
+| SpO2 大幅偏离而心率正常 | Red/IR 字节序 | 60 |
+| 噪声大、漂、模块发热 | 降亮度验证/供电去耦 | 61 |
+
+### 9.3 语音 AI xiaozhi（62–71，源：voice-assistant-xiaozhi）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| 编不过/ABI 报错；C3 Wi-Fi init 失败 | IDF 6.x 分支（非 tag） | 62 |
+| 4MB flash 收不到 OTA | 4m.csv 无 ota 分区 | 63 |
+| 无 PSRAM 唤醒词无效/说话卡死 | AFE 依赖 SPIRAM | 64 |
+| 对话中途卡死无声 | 发送失败清空队列 | 65 |
+| 烧错板型：无声/引脚错乱 | 板目录逐字核对 | 66 |
+| 开着音箱唤醒不了/自打断 | AEC 参考通道硬件 | 67 |
+| "No websocket section found" | OTA 接口下发配置链 | 68 |
+| device/server AEC 同开编译失败 | 二者互斥只开一 | 69 |
+| 4G 板收事件再发数据死机 | Schedule 到主任务发 | 70 |
+| MCP 工具调用偶发不响应 | 工具数量+前置排列 | 71 |
+
+### 9.4 电机控制 FOC/CAN（72–81，源：motor-control-foc）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| 总线一次异常后 CAN 永久静默 | BUS_OFF recovery+重启 | 72 |
+| 蓝牙断连后沿旧指令行驶 | 指令超时清零 | 73 |
+| 每换一块板手改零偏重烧 | 静止自校准+NVS 存储 | 74 |
+| 角速度读数整体偏小 8 倍 | 量程档与换算系数一致 | 75 |
+| 跌倒保护分支卡死不退出 | 保护等待加超时+WDT 注册 | 76 |
+| 控制环偶发半更新数据抖动 | 临界区快照/序列锁 | 77 |
+| 电池低压后输出突变 | 低压停机不伪造电压 | 78 |
+| 端到端延迟抖动最坏 >6ms | 反馈内联读/提任务优先级 | 79 |
+| BLE 调试帧裸读写 RAM | 量产关调试特征+配对加密 | 80 |
+| 上电约 5s 无响应像死机 | LED 明示状态+黑窗日志 | 81 |
+
+### 9.5 量产手册（82–93，源：production-readiness）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| 空闲内存够却 malloc 失败 | largest_free_block/静态分配 | 82 |
+| 链接错 iram0.text 放不下 | 只给 ISR 加 IRAM_ATTR | 83 |
+| 随机重启/数据错乱无规律 | 栈溢出检测+水位 <200 字加栈 | 84 |
+| 解深层 JSON/遍历目录崩溃 | 任务内禁递归 | 85 |
+| WiFi connected 但 MQTT/云不通 | 双层保活（链路+应用） | 86 |
+| 弱网下越忙越连不上雪崩 | 心跳限流+QoS 分级+降频 | 87 |
+| NVS 越用越慢/NO_FREE_PAGES | 延迟写+变更才写 | 88 |
+| 启动慢；深睡唤醒后 WiFi 不稳 | PHY 校准数据入 NVS | 89 |
+| 定时唤醒周期越跑漂移越大 | 外部 32.768kHz 晶振 | 90 |
+| 弱网 OTA 反复从头下载 | NVS 记偏移断点续传 | 91 |
+| 串口拖慢系统/printf 栈溢出 | 日志分级+Newlib Nano | 92 |
+| OTA 途中被配网/复位打断变砖 | 升级互斥锁 | 93 |
+
+### 9.6 教育机器人 Mind+（94–101，源：mindplus-robot-ext）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| 直流电机啸叫/低速抖/H 桥发热 | PWM 频率 10–20kHz（非 50） | 94 |
+| 想滑行却猛刹一顿顿走 | 双高=刹车，双低=滑行 | 95 |
+| FpvReadByte 偶发随机值 | default 返回 0 封口 | 96 |
+| 自写校验和移植后总错 | `&` 高于 `^`，加括号 | 97 |
+| 一键起飞/降落偶发丢失 | 命令沿检测，环 <200ms | 98 |
+| 旧 .mp 案例没有新功能 | 内嵌旧库，重新拖积木 | 99 |
+| 两种模式积木只认一个 | addSetup 键名含模式 | 100 |
+| mcpwm_init 找不到/deprecation | IDF 5.2+ 新 MCPWM/PCNT API | 101 |
+
+### 9.7 MicroPython 商用工程（102–115，源：micropython-env-controller）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| microdot 保存大配置(>16KB)静默失败 | max_content_length 上限 | 102 |
+| 整机"卡死"无异常日志、网络全断 | IOQueue OSError 补丁 | 103 |
+| Web/控制周期性卡顿数百 ms | gc.threshold 小步+免 SD 落盘 | 104 |
+| 首次请求后刷 `spi transmit failed` | 底层对象被 GC 析构，钉引用 | 105 |
+| RS485 快速响应整帧被吞/死锁 | DE 时序下沉 C | 106 |
+| 9600 长帧 CRC 失败只收 20B | 帧空闲阈值提到 30ms | 107 |
+| 写已执行但主机报"无响应" | 回显判定四层匹配 | 108 |
+| Modbus-TCP 连断风暴压测冻结 | 单任务非阻塞+连接上限 | 109 |
+| u16 寄存器 40000 显示 -25536 | 仅 s16/s32 符号扩展 | 110 |
+| asyncio.sleep 后动作偶发不执行 | 自写 _sleep_ms 硬超时 | 111 |
+| 服务读不到板载输入/状态时有时无 | import main 重执行，模块别名 | 112 |
+| OTA"成功"但行为没变 | .py 优先于 .mpy，同步 .bak | 113 |
+| MQTT 带 auth 被 RST；断线永不重连 | umqtt 编码 bug，自写客户端 | 114 |
+| OTA 升级包损坏直接变砖 | tar 校验链+.mpy 绑定+回滚 | 115 |
+
+### 9.8 Modbus / RS-485 主机（116–124，源：modbus-rtu-485）
+
+| 症状关键词 | 先查 | pitfall |
+|---|---|---|
+| 每次事务耗满超时、CPU 空转 | 字节间隔判帧完+yield | 116 |
+| 读 >29 寄存器必报 TIMEOUT | 缓冲 ≥5+2N+2 | 117 |
+| slave=0/quantity=0 照发不误 | 调用前自校验参数 | 118 |
+| lun 传大后内存静默写坏 | 入口边界检查 | 119 |
+| 从机收到截尾请求帧/CRC 错 | wait_tx_done 再拉低 DE | 120 |
+| 干扰后连续多轮 CRC 错又自愈 | 溢出进丢弃模式待静默 | 121 |
+| 广播写单寄存器误报超时 | slave==0 跳过等待 | 122 |
+| 发送期间收到"幻影数据" | DE+/RE 接法+发前清缓冲 | 123 |
+| 高频轮询吞吐折损 10%+ | DE 延时 µs 级/硬件 RS485 | 124 |

@@ -88,7 +88,7 @@
 | `modbus-rtu-485.md` | RS-485 与 Modbus RTU 主机从零实现（tiny485-mbrtu 转写）：协议事实速查/CRC16/ESP-IDF 与 Arduino 双轨移植 |
 | `production-readiness.md` | 量产工程纪律：内存泄漏与碎片/栈水位/弱网限流/OTA 铁律/低功耗分层/量产前检查清单 |
 | `power-and-sleep.md` | 低功耗：深睡范式/唤醒源/RTC 内存/gpio_hold |
-| `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位 |
+| `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位；症状→坑编号全量映射 #1–124 |
 | `known-pitfalls.md` | 124 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人/MicroPython 商用工程/Modbus 主机，症状→根因→修法 |
 
 </details>
