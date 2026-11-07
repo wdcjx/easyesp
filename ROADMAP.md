@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿）六份文档与坑清单 #36–81，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E）七份文档与坑清单 #36–81、#94–101，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -58,6 +58,14 @@
 | 量产工程纪律 | `references/production-readiness.md` | 源自用户提供的《ESP32 软件开发避坑手册（量产级）》docx 转写提炼（文档沉淀，未上板）：内存泄漏与碎片/栈水位/弱网限流/OTA 量产铁律/低功耗分层/量产前检查清单 12 项 |
 | 坑清单量产手册类 82–93 | `references/known-pitfalls.md` | 内存碎片最大块不足/IRAM 塞爆/栈水位无监测/递归爆栈/假连接/弱网猛发/NVS 频写/PHY 校准缺失/RC 漂移/OTA 断点续传/量产日志/OTA 互斥，共 12 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（量产/上线/交付/检查清单/内存泄漏/碎片/断点续传）、计数 81→93、README 18 份；README 标题去「（DSH Skill）」括号（技能可给任意 agent 调用） |
+
+## 已沉淀（第七轮：Mind+ 教育机器人扩展库）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| Mind+ 教育机器人扩展 | `references/mindplus-robot-ext.md` | 源自瑞龙制造 ESP32 物联网机器人 Mind+ 用户扩展库 V0.0.2（已上板，含 fireBeetleEsp32E 编译产物实证；MIT）：Mind+ 扩展库结构（config.json/main.ts 生成器/_menus/.mpext=ZIP/.mp 内嵌库）、MCPWM 电机 H 桥（unit×timer 映射+符号-幅值换向）、PCNT 正交编码器（ESP32Encoder 三模式）、FPV 遥控器 UART 协议（0x66…0x99 帧）、I2C 计分器（0x51/0x20）、RL_PID、legacy→IDF 5.2+ 新 API 迁移注记 |
+| 坑清单教育机器人类 94–101 | `references/known-pitfalls.md` | MCPWM 50Hz 频率 bug/零速双高刹车语义/FpvReadByte 越界 UB/校验和优先级/FPV 脉冲窗丢命令/.mp 内嵌旧库版本漂移（V0.0.1 缺 bit4/bit7 实证）/生成器同键覆盖/legacy API 弃用线，共 8 条 |
+| 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（Mind+/图形化编程/MCPWM/PCNT/编码器/H 桥/FPV/瑞龙）、计数 93→101、README 19 份、实战文档 6→7 份 |
 
 ## 待验证（首个实测工程时逐项确认并回写）
 
