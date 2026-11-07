@@ -20,8 +20,14 @@ validate_esp_generated.py — ESP32（ESP-IDF / Arduino）生成代码工程纪�
       （gpio_isr_handler_add / attachInterrupt / uart_isr_register / gptimer .on_alarm=）。
     esp_timer 回调、esp_event 处理器、ESP-NOW 回调、BLE setCallbacks 回调、WiFi.onEvent
     按"任务上下文回调"（铁律 B）单独检查阻塞。
+  - MANIFEST 声明核对（M 系列，源自 XRobot PkgKit manifest-in-header 思想的 C 轨移植）：
+    源文件头部 `/* === EASYESP MANIFEST V1 === … === END MANIFEST === */` 注释块内嵌
+    target/track/pins 声明——核对 target 合法性、芯片 GPIO 存在性（esp32/s3/c3 三套边界）、
+    pins 重复声明、代码实际使用的 GPIO 是否都被声明覆盖。
+    无 MANIFEST 的文件跳过全部 M 系列检查（向后兼容）。
   - 自测：python validate_esp_generated.py ../tests/bad_sample_isr.c ../tests/bad_sample_task.c
     应报多条 VIOLATION；../templates/main_idf.c 应 PASS。
+    基线回归以 scripts/ci_check.py（十样本）为准。
 """
 
 import argparse
@@ -122,6 +128,56 @@ TASKCB_BLOCK_RE = re.compile(
 )
 
 ARDUINO_BAN_CALL_RE = re.compile(r"(?i)\b(delay|delayMicroseconds|yield|vTaskDelay)\s*\(")
+
+# ---- EASYESP MANIFEST V1（C 注释内嵌声明块；stdlib 手解析，不引 PyYAML）----
+MANIFEST_HEAD_RE = re.compile(
+    r"/\*\s*===\s*EASYESP MANIFEST V1\s*===\s*(.*?)===\s*END MANIFEST\s*===\s*\*/", re.S
+)
+VALID_TARGETS = ("esp32", "esp32s3", "esp32c3")
+# 芯片 GPIO 存在性（只查"存在/不引出"，strapping 与复用禁区由 gpio-pinout-guide.md 负责）：
+#   esp32   经典: 0-19,21-23,25-27,32-39（20/24/28-31 物理不存在）
+#   esp32s3: 0-21,26-48（22-25 flash/PSRAM 占用不引出 → WARN）
+#   esp32c3: 0-21（11-17 flash、18/19 USB-JTAG → WARN）
+TARGET_GPIO_RULES = {
+    "esp32":   {"max": 39, "missing": {20, 24, 28, 29, 30, 31}, "warn": set()},
+    "esp32s3": {"max": 48, "missing": set(), "warn": {22, 23, 24, 25}},
+    "esp32c3": {"max": 21, "missing": set(), "warn": set(range(11, 20))},
+}
+# 代码侧 GPIO 使用证据：IDF 的 GPIO_NUM_n 枚举 + Arduino 首参为纯数字的引脚调用
+GPIO_NUM_RE = re.compile(r"\bGPIO_NUM_(\d+)\b")
+ARDUINO_PIN_CALL_RES = [
+    re.compile(r"\bpinMode\s*\(\s*(\d+)\s*,"),
+    re.compile(r"\bdigitalWrite\s*\(\s*(\d+)\s*,"),
+    re.compile(r"\bledcAttach\s*\(\s*(\d+)\s*,"),
+    re.compile(r"\bdigitalPinToInterrupt\s*\(\s*(\d+)\s*\)"),
+]
+
+
+def parse_manifest(raw_text):
+    """从原始文本（neutralize 之前）解析 EASYESP MANIFEST V1 块；无则返回 None。"""
+    m = MANIFEST_HEAD_RE.search(raw_text)
+    if not m:
+        return None
+    info = {"line": raw_text.count("\n", 0, m.start()) + 1,
+            "target": None, "track": None, "pins": [], "pins_lines": {}}
+    for raw_line in m.group(1).splitlines():
+        s = raw_line.strip()
+        t = re.match(r"target:\s*(\S+)", s)
+        if t:
+            info["target"] = t.group(1)
+            continue
+        t = re.match(r"track:\s*(\S+)", s)
+        if t:
+            info["track"] = t.group(1)
+            continue
+        if s.startswith("- "):
+            g = re.search(r"gpio:\s*(\d+)", s)
+            if g:
+                n = int(g.group(1))
+                f = re.search(r"func:\s*([A-Za-z_][\w-]*)", s)
+                info["pins"].append((n, f.group(1) if f else ""))
+                info["pins_lines"].setdefault(n, []).append(s)
+    return info
 
 
 def blank_keep_newlines(match):
@@ -490,6 +546,43 @@ def analyze(path, text, findings, irq_owner, project):
             add(line_of(text, f["open"] + 1 + hm.start()), VIOL,
                 f"回调 '{f['name']}' 内使用动态内存：回调路径禁止堆操作")
 
+    # ---- M 系列: EASYESP MANIFEST V1 声明核对（无 manifest 则跳过）----
+    mf = project.get("manifests", {}).get(path)
+    if mf:
+        if mf["target"] not in VALID_TARGETS:
+            add(mf["line"], VIOL,
+                f"MANIFEST target '{mf['target']}' 非法：必须是 esp32/esp32s3/esp32c3 之一"
+                "（target 必须与 idf.py set-target / 实际芯片一致）")
+        # 代码侧实际使用的 GPIO 集合
+        used = {int(x) for x in GPIO_NUM_RE.findall(text)}
+        for pin_re in ARDUINO_PIN_CALL_RES:
+            used |= {int(x) for x in pin_re.findall(text)}
+        if mf["target"] in TARGET_GPIO_RULES:
+            rule = TARGET_GPIO_RULES[mf["target"]]
+            for n in sorted(used):
+                pm = re.search(r"\bGPIO_NUM_%d\b" % n, text)
+                line = line_of(text, pm.start()) if pm else mf["line"]
+                if n > rule["max"] or n in rule["missing"]:
+                    add(line, VIOL,
+                        f"GPIO{n} 在 {mf['target']} 上不存在（编号上限 GPIO{rule['max']}，"
+                        "各芯片编号集不同）：核对照 chip-family-notes.md / gpio-pinout-guide.md")
+                elif n in rule["warn"]:
+                    add(line, WARN,
+                        f"GPIO{n} 在 {mf['target']} 上属 flash/USB 专用或受限引脚"
+                        "（如 C3 11-17 flash、18/19 USB-JTAG；S3 22-25 不引出）：核对引脚禁区表后再用")
+        dup = sorted(n for n, ls in mf["pins_lines"].items() if len(ls) > 1)
+        if dup:
+            add(mf["line"], VIOL,
+                f"MANIFEST pins 中 GPIO {', '.join(map(str, dup))} 被声明多次："
+                "一个引脚一个功能，冲突分配先改设计再改表")
+        if mf["pins"]:
+            declared = {n for n, _ in mf["pins"]}
+            undeclared = sorted(used - declared)
+            if undeclared:
+                add(mf["line"], WARN,
+                    f"代码使用 GPIO {', '.join(map(str, undeclared))} 但未在 MANIFEST pins 声明："
+                    "分配表应是单一事实源，实际用到的引脚全部入表")
+
 
 def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
@@ -523,9 +616,14 @@ def main(argv=None):
         return 2
 
     texts = {}
+    manifests = {}
     for p in to_check:
         try:
-            texts[p] = neutralize(p.read_text(encoding="utf-8", errors="replace"))
+            raw = p.read_text(encoding="utf-8", errors="replace")
+            mf = parse_manifest(raw)  # 必须在 neutralize 之前：manifest 位于注释内，抹白后不可见
+            if mf:
+                manifests[p] = mf
+            texts[p] = neutralize(raw)
         except OSError as exc:
             findings_pre = (str(p), 0, WARN, f"无法读取：{exc}")
             texts[p] = ""
@@ -537,6 +635,7 @@ def main(argv=None):
     project = {
         "has_nvs_init": bool(re.search(r"\bnvs_flash_init\s*\(", combined)),
         "flags": set(re.findall(r"\bESP_INTR_FLAG_\w+", combined)),
+        "manifests": manifests,
     }
 
     findings = []

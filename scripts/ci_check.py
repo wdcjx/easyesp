@@ -6,14 +6,17 @@
 CI 中由 .github/workflows/ci.yml 调用，exit 0 = 全部通过。
 
 检查项：
-  1. validator 七样本基线（三 bad_sample 必须 FAIL 且违规/警告数精确匹配，
-     四正例必须 PASS 且违规=0）——防规则漂移（误报/漏报都会被抓住）
+  1. validator 十样本基线（四 bad_sample 必须 FAIL 且违规/警告数精确匹配，
+     六正例必须 PASS 且违规=0）——防规则漂移（误报/漏报都会被抓住）
   2. references/ 目录与 SKILL.md 资源表双向一致（表里有的文件必须存在；
      目录里的文档必须都在表中）
   3. known-pitfalls.md 坑编号连续 1..N（无重号/跳号；表格格式 `| N |`）
   4. README.md 中坑计数声明 == known-pitfalls.md 实际条数（防忘更新）
   5. README.md 知识文档计数声明 == references/ 实际 .md 数
   6. README.md 文件树覆盖 references/ 全部文档（防新增文档忘加文件树行）
+
+  真实编译验证（idf.py build 三目标 + arduino-cli 三板）在
+  .github/workflows/build.yml——本脚本只做静态一致性回归。
 """
 import os
 import re
@@ -28,10 +31,13 @@ BASELINE = [
     ('tests/bad_sample_isr.c',                       'FAIL', 12, 1),
     ('tests/bad_sample_task.c',                      'FAIL', 4,  2),
     ('tests/bad_sample_ble.cpp',                     'FAIL', 5,  1),
+    ('tests/manifest_bad_sample.c',                  'FAIL', 2,  1),
     ('tests/good_sample_ble.cpp',                    'PASS', 0,  0),
+    ('tests/manifest_good_sample.c',                 'PASS', 0,  0),
     ('templates/main_idf.c',                         'PASS', 0,  0),
     ('templates/main_arduino.ino',                   'PASS', 0,  0),
     ('examples/blink_uart_demo/main/blink_uart_demo.c', 'PASS', 0, 0),
+    ('examples/arduino_blink_uart/arduino_blink_uart.ino', 'PASS', 0, 0),
 ]
 
 failures = []

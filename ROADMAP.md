@@ -99,9 +99,18 @@
 | 坑清单 POV 风扇屏类 139–153 | `references/known-pitfalls.md` | C 整数除法亮度缩放恒 0（PC float 语义漂移）/空文件系统裸 fopen 首启崩/feof 先判后读多计一帧/MQTT 分块覆盖写大文件必坏/publish 超 out_buffer 静默丢/路径穿越+CORS\* 无认证/公网明文账密三处泄露/100kHz ISR 非幂二模除/上下拉同开/BGR-RGB 换序/000%d 文件名漂移/固定尺寸缓冲越界/44100+44 头写死/455KB EMBED 死资源/魔改组件全局 tick 共享，共 15 条 |
 | 收口更新 | `SKILL.md` / `README.md` / `ROADMAP.md` | 资源表+1 行、frontmatter 触发词（POV/视觉暂留/风扇屏/全息风扇/WS2812/灯带/步进电机/TMC2209）、计数 138→153、README 23 份、实战文档 10→11 份、symptom-quickref §9.10（139–153） |
 
+## 已沉淀（第十二轮：工程化加固，源自 XRobot PkgKit 评估）
+
+| 项 | 文件 | 来源与状态 |
+|---|---|---|
+| 真实编译 CI | `.github/workflows/build.yml` | IDF job：espressif/idf:v5.3.1 容器 idf.py build（esp32/S3/C3 三目标 × blink_uart_demo）；Arduino job：arduino-cli 1.5.1 + esp32 core 3.3.12 双锁版本三块板编译 arduino_blink_uart；月度 cron 检测上游漂移（XRobot PkgKit 的 CI 手法移植，弃其浮动 tag 反例） |
+| MANIFEST 引脚声明核对 | `scripts/validate_esp_generated.py` | 新增 M 系列规则：`/* === EASYESP MANIFEST V1 === */` C 注释声明块（target/pins）→ target 合法性、芯片 GPIO 存在性（esp32 上限 39 且 20/24/28-31 不存在；S3 上限 48、22-25 不引出；C3 上限 21、11-19 受限）、一脚一功能、实际用脚全入表；无声明块的文件跳过（向后兼容）。源自 XRobot manifest-in-header 思想的 C 轨移植 |
+| 自测基线 7→10 样本 | `scripts/ci_check.py` + `tests/manifest_good_sample.c` / `tests/manifest_bad_sample.c` + `examples/arduino_blink_uart/` | MANIFEST 正例（C3 声明一致 → PASS V0W0）/反例（同脚双功能+超上限+未声明 → FAIL V2W1）；Arduino 最小 sketch 入正例基线 |
+| 单一事实源纪律 | `templates/main_idf.c` + `SKILL.md` | 模板头部带 MANIFEST 声明块；工作流第 2 步明确"分配表落进代码头部声明块，检查器核对声明与代码一致" |
+
 ## 待验证（首个实测工程时逐项确认并回写）
 
-- [ ] `idf.py build` 编译通过（模板/示例）：IDF 5.3.1 实际编译暴露的 API 拼写与头文件问题
+- [ ] `idf.py build` 编译通过（模板/示例）：IDF 5.3.1 实际编译暴露的 API 拼写与头文件问题（build.yml CI 已对 blink_uart_demo 三目标真实编译，首跑结果回写此处；模板暂不在 CI 编译范围）
 - [ ] IRAM_ATTR ISR 与 flash 写（NVS）交叉运行不 crash
 - [ ] I2C 新驱动（`i2c_master.h`）在目标芯片上的实际行为与超时参数
 - [ ] ADC oneshot + 校准（line fitting）实测值

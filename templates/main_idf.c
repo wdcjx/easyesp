@@ -16,6 +16,13 @@
   *          放入实际工程（idf.py build）后即消除。
   ******************************************************************************
   */
+/* === EASYESP MANIFEST V1 ===
+target: esp32
+track: idf
+pins:
+  - gpio: 2 func: led          // 板载 LED；S3/C3 按板改，连同 target 一起改
+  - gpio: 0 func: button       // 经典 ESP32 boot 键（strapping，上拉输入读即可）
+=== END MANIFEST === */
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

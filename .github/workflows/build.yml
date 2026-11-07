@@ -1,0 +1,81 @@
+name: Build
+
+# 真实编译验证（静态 ci_check.py 之外：模板与示例必须过编译器）
+# - idf job:    espressif/idf:v5.3.1 容器，examples/blink_uart_demo 三目标全编
+# - arduino job: arduino-cli 1.5.1 + esp32 core 3.3.12（双锁版本），三块板全编
+# - 版本一律锁死（反例教训：XRobot PkgKit 的 CI 用浮动 tag + 不锁依赖，
+#   月度 cron 跑出漂移，与其"版本一致性"目标相悖）
+# - schedule 月度 cron：无提交也跑，检测上游（core/容器/依赖）漂移与弃用
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/**'
+      - 'templates/**'
+      - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'examples/**'
+      - 'templates/**'
+      - '.github/workflows/build.yml'
+  workflow_dispatch: {}
+  schedule:
+    - cron: '17 2 1 * *'   # 每月 1 日 02:17 UTC（10:17 北京），避开整点高峰
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  idf:
+    name: idf.py build (${{ matrix.target }})
+    if: github.repository == 'wdcjx/easyesp'
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.3.1
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [esp32, esp32s3, esp32c3]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build blink_uart_demo
+        shell: bash
+        run: |
+          . $IDF_PATH/export.sh
+          cd examples/blink_uart_demo
+          idf.py set-target ${{ matrix.target }}
+          idf.py build
+
+  arduino:
+    name: arduino-cli compile (${{ matrix.board }})
+    if: github.repository == 'wdcjx/easyesp'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [esp32, esp32s3, esp32c3]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: '1.5.1'
+
+      - name: Install esp32 core 3.3.12 (locked)
+        run: |
+          arduino-cli config init --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@3.3.12
+
+      - name: Compile arduino_blink_uart
+        run: |
+          arduino-cli compile --fqbn "esp32:esp32:${{ matrix.board }}" \
+            --warnings default examples/arduino_blink_uart

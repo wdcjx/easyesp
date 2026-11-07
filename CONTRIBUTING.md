@@ -45,8 +45,8 @@
 
 ```bash
 # validator 基线
-python scripts/validate_esp_generated.py tests/bad_sample_isr.c tests/bad_sample_task.c tests/bad_sample_ble.cpp   # 应 FAIL
-python scripts/validate_esp_generated.py templates/main_idf.c tests/good_sample_ble.cpp examples/blink_uart_demo/main/blink_uart_demo.c  # 应 PASS
+python scripts/validate_esp_generated.py tests/bad_sample_isr.c tests/bad_sample_task.c tests/bad_sample_ble.cpp tests/manifest_bad_sample.c  # 应 FAIL
+python scripts/validate_esp_generated.py templates/main_idf.c tests/good_sample_ble.cpp tests/manifest_good_sample.c examples/blink_uart_demo/main/blink_uart_demo.c examples/arduino_blink_uart/arduino_blink_uart.ino  # 应 PASS
 
 # CI 全量回归（与 GitHub Actions 完全一致）
 python scripts/ci_check.py
