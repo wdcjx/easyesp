@@ -1,7 +1,7 @@
 # 症状速查（看到什么报文→先查什么）
 
 > 何时读：拿到错误日志/异常复位现象，先用本文把报文翻译成排查方向，再跳 known-pitfalls.md 对应编号。
-> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–153 全量：基础类见 §8，实战工程类（#36–153，含 MicroPython / Modbus / BLE 小程序外设 / POV 风扇屏）见 §9
+> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–165 全量：基础类见 §8，实战工程类（#36–165，含 MicroPython / Modbus / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机）见 §9
 
 ## 1. 排查方法论（三步）
 
@@ -139,7 +139,7 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 
 ## 8. 一页总表·基础类（症状关键词 → 先查 → pitfall 编号，#1–35）
 
-> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9；#125–138 BLE 小程序外设见 §9.9；#139–153 POV 风扇屏见 §9.10。
+> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9；#125–138 BLE 小程序外设见 §9.9；#139–153 POV 风扇屏见 §9.10；#154–165 ESP32-CAM 双机小车见 §9.11。
 
 | 症状关键词 | 先查 | pitfall |
 |---|---|---|
@@ -345,3 +345,20 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 | 大图/非 160×160 花屏堆损 | 截断+固定尺寸缓冲越界 | 151 |
 | wav 快放变声/头杂音 | 44100+44 字节头写死 | 152 |
 | app 分区莫名紧张 | 455KB 死资源 EMBED | 153 |
+
+### 9.11 ESP32-CAM / 双机协处理（154–165，源：esp32cam-stm32-bridge）
+
+| 症状 | 先查 | 编号 |
+|---|---|---|
+| 对端发半行数据网页卡 1 秒 | readStringUntil 默认 1000ms 超时饿死 loop | 154 |
+| 换一份 uart 实现后读数全 0 | CSV 与 JSON 双实现协议漂移 | 155 |
+| 按文档接新对端命令失灵 | 单字符下行无换行、靠立即执行语义 | 156 |
+| 松开却回 ACK:AUTO_TRACK | 复制粘贴旧版 ACK 文案 | 157 |
+| 147KB camera_index.h 拖累编译 | 未调用的官方示例死代码 | 158 |
+| 改 partitions.csv 无效果 | Arduino 不读 sketch 目录分区表 | 159 |
+| 摄像头工程加 PWM 后画面异常 | XCLK 占 LEDC ch0/timer0+宏撞名 | 160 |
+| AP 失败后设备消失无指示 | while(1) 静默停机 | 161 |
+| SD 卡怎么初始化都失败 | SD 引脚组被 UART2/闪光灯瓜分 | 162 |
+| 交叉接线共 3.3V 仍乱码 | 跨板没共地 | 163 |
+| STM32 侧某轮方向失控 | PB3/PB4 未 SWJ remap | 164 |
+| 双标签看视频控制变卡 | 单线程 send_P 整帧阻塞 /control | 165 |

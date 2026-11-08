@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen）十一份文档与坑清单 #36–81、#94–153，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project）十二份文档与坑清单 #36–81、#94–165，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -127,13 +127,21 @@
 - [ ] MAX30102：MPY（÷8 量纲）与 SparkFun（18bit 原值）两固件阈值衔接实测（源工程已上板，本条为跨固件复现）
 - [ ] 电机控制：TWAI bus-off 恢复补丁（recovery+start）在真实总线上验证；MPU6050 量程显式设置后 DMP 输出一致性（源工程已上板运行，本条为修复项复现）
 
+## 已沉淀（第十三轮：ESP32-CAM 双机智能小车）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| references/esp32cam-stm32-bridge.md | stm32-car-project 转写（第 24 份）：双机架构/AI-Thinker 引脚预算/esp_camera 初始化/伪 MJPEG/跨 MCU 协议/死代码实证 | 源工程已上板，转写未二次复测 |
+| 坑清单 #154–165 | ESP32-CAM/双机协处理类 12 条（readStringUntil 超时/协议漂移/引脚互斥/共地/PB3 PB4 remap 等） | 源自已上板工程静态审查 |
+| SKILL/README/quickref 收口 | 触发词+路由+能力边界（Arduino 轨摄像头已沉淀、IDF 轨深度定制仍缺）+全量映射 #1–165 | ci_check 全绿 |
+
 ## 下一批候选主题
 
 - IDF 轨 BLE（NimBLE-IDF：GATT 自定义服务/主机扫描）——Arduino 轨 HID 已沉淀，本条只剩 IDF 轨
 - 经典蓝牙 SPP 串口透传（Arduino）
 - 以太网（LAN8720/IP101 RMII PHY）与 Wi-Fi 共存——W5500 SPI 以太网已由 micropython-env-controller §12 覆盖（商用上板），剩余 RMII PHY 与共存调度
 - USB Host / USB Serial JTAG 进阶
-- esp32-camera 图像采集
+- esp32-camera 图像采集（Arduino 轨 ESP32-CAM 已由 esp32cam-stm32-bridge 覆盖；剩余 IDF 轨驱动深度定制/多传感器）
 - ULP RISC-V 协处理器
 - ESP32-C6 / H2 / P4（Wi-Fi 6 / 双模）扩展
 - ESP-IDF 6.x 迁移指南（如发布）

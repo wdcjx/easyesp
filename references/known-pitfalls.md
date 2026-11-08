@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–153 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设与 POV 风扇屏）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–165 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏与 ESP32-CAM 双机小车）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -278,5 +278,22 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 151 | 【解码】上传 336×256 或 >20KB 的 JPEG 后花屏/堆损坏 | `image_data[20000]` 固定读 20000B 截断大图；`outData=malloc(160*160*3)`、outW/outH 写死 160，非 160×160 图的 rect 增量写出界 | 上传前限制尺寸与体积（PC 端缩放）；或按 tjpgd_prepare 返回的实际宽高分配 outData |
 | 152 | 【音频】播放 8kHz/22.05kHz 的 wav 变声快放；某些 wav 头几毫秒杂音 | I2S 速率写死 44100、`data+44` 假定 44 字节标准头，都不解析 wav fmt chunk | 解析 wav 头取真实 sample_rate/data 偏移；或统一离线转码 44100/16bit/mono 再上传 |
 | 153 | 【构建】app 分区莫名紧张，1600K 放不下固件 | `EMBED_FILES "123.wav"` 把 455KB 音频链进 app 镜像，而运行时只用 littlefs 里的 music.wav（嵌入版只活在注释代码） | 用户可换资源放文件系统；EMBED 只留 bootloader 必需资产；定期 `idf.py size` 审计各段 |
+
+## ESP32-CAM/双机协处理类（154–165）
+
+| 编号 | 症状 | 根因 | 修法 |
+|---|---|---|---|
+| 154 | 【双机】STM32 发半行数据（无 `\n`）时网页卡死约 1 秒、控制命令无响应 | ESP32 `while(SerialSTM32.available()) readStringUntil('\n')` 默认 1000ms 流超时：半行数据把整个 loop 拖住，WebServer.handleClient 饿死 | 循环内改逐字节非阻塞读自行拼行；或 `SerialSTM32.setTimeout(10)` 收紧；行协议定长/带超时帧界 |
+| 155 | 【双机】换用另一份 uart_comm.c 后 ESP32 网页传感器读数全变 0 | 同仓库两套实现协议漂移：活代码 main.c 轮询+CSV（`SENSOR:25,50,85,100.0`），死代码 uart_comm.c 中断行协议+JSON（`SENSOR:{"temp":25,...}`）；JSON 行的 `{"temp":25`.toInt() 解析为 0 | 单一事实源：删掉死代码或统一一种格式；跨文件协议以实际被调用链为准，写进一份协议文档 |
+| 156 | 【双机】按"单字符+换行"协议文档接新对端后命令全部失灵 | ESP32 `SerialSTM32.write(cmd[0])` 只发单字符**不带换行**；能工作纯靠 STM32 轮询版"任何字符立即执行"的语义；行协议端收不到 `\n` 永远不触发 | 协议两端口径写死（帧界定符、是否即时执行）；调试期两端各自 echo 原始字节对账 |
+| 157 | 【双机】网页按"松开"返回 ACK:AUTO_TRACK，行为却对 | main.c 的 `A` 分支调 `Servo_Release()`，ACK 文案从旧版 uart_comm.c（CMD_AUTO_TRACK='A'）复制粘贴未改——语义漂移的活化石 | ACK 与动作同源生成（查表驱动）；review 时 ACK 文案与 case 语义对不上即复制粘贴信号 |
+| 158 | 【构建】sketch 目录拖着 147KB camera_index.h，编译慢且偶发 UI 相关编译错误 | 官方示例的 app_httpd.cpp+camera_index.h 原样留在工程，但 `startCameraServer()` 从未被调用；Arduino IDE 会编译目录内全部 .cpp | 从示例起步后删净未引用文件；"参考物"要么删、要么进独立库目录，别与活代码同层 |
+| 159 | 【烧录】改了 sketch 里的 partitions.csv 无任何效果/仍提示 app 过大 | Arduino 构建不读 sketch 目录的分区表文件，分区由 IDE 菜单选择（本板须 Huge APP 3MB No OTA）；csv 是示例装饰文件 | 删除误导性 csv；文档写明"分区在 IDE 菜单选 Huge APP"；CI 用 fqbn 参数 PartitionScheme=custom 指向仓库级 csv |
+| 160 | 【外设】摄像头工程再加 analogWrite/LEDC 后画面撕裂或 PWM 失常 | esp32-camera 的 20MHz XCLK 由 LEDC_CHANNEL_0/LEDC_TIMER_0 合成，被摄像头独占；且 camera_pins.h 的 `LED_GPIO_NUM`(=4) 与用户灯光宏撞名需 `#undef` | 其余 PWM 一律避开 ch0/timer0（LEDC 有 8 通道 4 定时器）；include pins 后按需 undef 撞名宏 |
+| 161 | 【启动】热点启动失败后设备"消失"，无任何指示 | `while(1) delay(1000)` 静默停机：无 LED 指示、无重试、无看门狗（Arduino 默认无 TWDT） | 失败路径闪烁板载灯/重启计数（ESP.restart() 退避）；至少 Serial 打印错误码 |
+| 162 | 【硬件】想加 SD 卡记录却怎么初始化都失败 | UART2 占 GPIO14/15、闪光灯占 GPIO4——AI-Thinker 的 SD_MMC 引脚组（2/4/14/15）已被瓜分；GPIO15 还是 strapping（boot 输出日志毛刺） | 引脚预算先行：camera(17 脚)+UART2(14/15)+LED(4) 后 SD 已无脚；要 SD 就放弃闪光灯+换 UART 脚或上 S3 板 |
+| 163 | 【双机】TX/RX 交叉接好、双方共 3.3V，串口仍全收乱码或不通 | 没共地：UART 电平参考 GND，两板各自供电时 GND 不连则电平无参考（源 README 只提示了 RX/TX 交叉） | 任何跨板数字通信必连 GND（UART/I2C/SPI 通则）；接线表把 GND 列为第 0 线 |
+| 164 | 【双机】STM32 侧右后轮方向失控或不受控（跨 MCU 审查发现，以实测为准） | 方向脚选了 PB3/PB4（JTDO/NJTRST），复位后默认 JTAG 功能，代码未做 `GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable)` | 用 PB3/PB4 前先 SWJ remap 关 JTAG 留 SWD；或改选普通 IO；STM32 选脚先查默认复用 |
+| 165 | 【视频】开两个浏览器标签看画面后，小车控制明显变卡 | 伪 MJPEG 轮询在单 loop 线程同步 `send_P` 整帧 JPEG：多客户端争抢 fb_count=2 帧池，大响应阻塞同线程的 /control 命令 | 单客户端约定（UI 提示）；或切 esp_http_server multipart 流（独立任务/分块发送）；控制与视频分端点优先级化 |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。
