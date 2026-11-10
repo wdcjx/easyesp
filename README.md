@@ -1,6 +1,7 @@
 # easyesp — ESP32 嵌入式开发辅助技能
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/wdcjx/easyesp)](https://github.com/wdcjx/easyesp/releases/latest)
 ![ESP32](https://img.shields.io/badge/ESP32-S3%20%7C%20C3-blue)
 ![Tracks](https://img.shields.io/badge/ESP--IDF%20%C3%97%20Arduino-2%20tracks-informational)
 [![CI](https://github.com/wdcjx/easyesp/actions/workflows/ci.yml/badge.svg)](https://github.com/wdcjx/easyesp/actions/workflows/ci.yml)
