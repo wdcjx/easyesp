@@ -135,6 +135,15 @@
 | 坑清单 #154–165 | ESP32-CAM/双机协处理类 12 条（readStringUntil 超时/协议漂移/引脚互斥/共地/PB3 PB4 remap 等） | 源自已上板工程静态审查 |
 | SKILL/README/quickref 收口 | 触发词+路由+能力边界（Arduino 轨摄像头已沉淀、IDF 轨深度定制仍缺）+全量映射 #1–165 | ci_check 全绿 |
 
+## 已沉淀（第十四轮：MultiButton 按键输入状态机）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| references/multibutton-input-fsm.md | MultiButton v1.1.1 库研读（第 25 份）：5 状态 8 事件精读/时序参数耦合/IDF+Arduino 集成配方/vendor vs 自写决策/注意事项 | 源码逐行精读，未上板；MIT 可直接 vendor |
+| SKILL/README 收口 | 触发词（按键/单击/双击/长按/连击/状态机/MultiButton/防抖）+导航表+资源表+25 份计数 | ci_check 全绿 |
+
+同轮评估舍弃：Awesome-Embedded（纯链接目录，无 ESP32 特异性、非 agent 可直接执行的知识，链接时效差）。
+
 ## 下一批候选主题
 
 - IDF 轨 BLE（NimBLE-IDF：GATT 自定义服务/主机扫描）——Arduino 轨 HID 已沉淀，本条只剩 IDF 轨

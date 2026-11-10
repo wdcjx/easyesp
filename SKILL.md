@@ -1,6 +1,6 @@
 ---
 name: easyesp
-description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖：工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA）、低功耗深睡、BLE HID 键盘与微信小程序外设、实时控制（IMU/PID/混控/飞控）、IoT 网关、语音 AI 助手、MAX30102 心率血氧、电机控制与 CAN（TWAI/LQR/VMC）、Modbus/RS-485 主从站、Mind+ 教育机器人（MCPWM/PCNT）、POV 风扇屏、ESP32-CAM 双机协处理（摄像头/伪视频流/跨 MCU 串口桥）、量产工程纪律（内存泄漏与碎片/OTA 铁律/检查清单）；24 份领域文档 + 165 条实战坑清单 + 症状速查 + 静态检查器（MANIFEST 引脚核对）+ CI 真实编译三芯片。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、小智、语音助手、语音交互、WebSocket、唤醒词、音频、心率、血氧、MAX30102、FOC、电机控制、CAN、TWAI、LQR、VMC、平衡车、轮腿、MPU6050、Mind+、图形化编程、MCPWM、PCNT、编码器、H 桥、FPV、瑞龙、MicroPython、mpy、Modbus、RS485、485、CRC16、变频器、Tuya、涂鸦、Home Assistant、规则引擎、asyncio、微信小程序、weapp、小程序蓝牙、GATT、CW、莫尔斯、电键、触摸键、蜂鸣器、POV、视觉暂留、风扇屏、全息风扇、WS2812、灯带、步进电机、TMC2209、ESP32-CAM、esp_camera、摄像头、视频流、双机、协处理器、SoftAP、热点、WebServer、量产、上线、交付、检查清单、内存泄漏、内存碎片、断点续传、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
+description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖：工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA）、低功耗深睡、BLE HID 键盘与微信小程序外设、实时控制（IMU/PID/混控/飞控）、IoT 网关、语音 AI 助手、MAX30102 心率血氧、电机控制与 CAN（TWAI/LQR/VMC）、Modbus/RS-485 主从站、Mind+ 教育机器人（MCPWM/PCNT）、POV 风扇屏、ESP32-CAM 双机协处理（摄像头/伪视频流/跨 MCU 串口桥）、量产工程纪律（内存泄漏与碎片/OTA 铁律/检查清单）；25 份领域文档（含按键输入状态机 MultiButton 模式） + 165 条实战坑清单 + 症状速查 + 静态检查器（MANIFEST 引脚核对）+ CI 真实编译三芯片。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、小智、语音助手、语音交互、WebSocket、唤醒词、音频、心率、血氧、MAX30102、FOC、电机控制、CAN、TWAI、LQR、VMC、平衡车、轮腿、MPU6050、Mind+、图形化编程、MCPWM、PCNT、编码器、H 桥、FPV、瑞龙、MicroPython、mpy、Modbus、RS485、485、CRC16、变频器、Tuya、涂鸦、Home Assistant、规则引擎、asyncio、微信小程序、weapp、小程序蓝牙、GATT、CW、莫尔斯、电键、触摸键、蜂鸣器、POV、视觉暂留、风扇屏、全息风扇、WS2812、灯带、步进电机、TMC2209、ESP32-CAM、esp_camera、摄像头、视频流、双机、协处理器、SoftAP、热点、WebServer、量产、上线、交付、检查清单、内存泄漏、内存碎片、断点续传、按键、单击、双击、长按、连击、按键状态机、MultiButton、去抖、防抖、消抖、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
 ---
 
 # easyesp — 嵌入式（ESP32）开发辅助技能
@@ -28,7 +28,8 @@ Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [ref
 | 实时控制（飞控/平衡车/电机/CAN） | realtime-control → motor-control-foc | freertos-on-esp32（核绑定/优先级）、isr-and-concurrency-rules | 电机类 #72–81 |
 | Modbus/RS-485（主机采集/变频器电表） | modbus-rtu-485 | micropython-env-controller §5–§7（从站与云侧对照）、peripheral-recipes（UART） | Modbus 类 #116–124 |
 | MicroPython 整机固件 | micropython-env-controller | —（轨内自带全栈；无静态检查，人工按其 §2 纪律核对） | MicroPython 类 #102–115 |
-| 传感器节点（I2C/ADC/心率血氧） | peripheral-recipes → sensor-max30102 | power-and-sleep（电池供电） | 传感器类 #54–61 |
+| 传感器节点（I2C/ADC/心率血氧） | peripheral-recipes → sensor-max30102 | power-and-sleep（电池供电）、multibutton-input-fsm（板载键交互） | 传感器类 #54–61 |
+| 按键交互（单击/双击/长按/连击） | multibutton-input-fsm | peripheral-recipes（GPIO 输入）、isr-and-concurrency-rules（节拍任务） | —（库特性注意见该文档 §8） |
 | 低功耗电池设备 | power-and-sleep → chip-family-notes（唤醒源差异） | production-readiness（功耗分层） | 基础类 #1–35 相关条 |
 | 显示/灯效（WS2812/POV/步进同步） | pov-fan-display | mindplus-robot-ext §2（MCPWM）、peripheral-recipes（RMT/LEDC） | POV 类 #139–153、教育机器人类 #94–101 |
 | 摄像头/双机桥接（ESP32-CAM+主控 MCU） | esp32cam-stm32-bridge | wifi-networking（SoftAP/HTTP 服务）、peripheral-recipes（UART） | ESP32-CAM 双机类 #154–165 |
@@ -93,6 +94,7 @@ Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [ref
 | `references/isr-and-concurrency-rules.md` | 写中断/共享数据时：上下文分类/IRAM_ATTR/临界区/ISR 模板 |
 | `references/freertos-on-esp32.md` | 用任务/队列/定时器时：与 STM32 差异/栈字节/TWDT/esp_timer/内存 |
 | `references/peripheral-recipes.md` | 外设配方：GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812 |
+| `references/multibutton-input-fsm.md` | 按键输入状态机（MultiButton v1.1.1 模式）：单击/双击/长按/连击事件分类、5 状态机精读、IDF/Arduino 集成配方、vendor 决策 |
 | `references/wifi-networking.md` | 联网场景：STA 序列/事件状态机/ESP-NOW/MQTT/HTTP/OTA |
 | `references/arduino-track.md` | **Arduino 轨每次生成前**：轨道选择/loopTask/2.x→3.x 迁移/映射表 |
 | `references/ble-hid-arduino.md` | BLE HID 键盘/外设（Arduino 轨）：初始化铁律序列/报告描述符/断连重广播/2.x→3.x 迁移 |

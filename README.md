@@ -59,7 +59,7 @@
 | 路径 | 内容 |
 |---|---|
 | `SKILL.md` | 技能主文件：模式路由、六步工作流、11 条硬约束、自检清单、资源表（agent 的入口） |
-| `references/` | 24 份知识文档（逐份清单见下方） |
+| `references/` | 25 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架，含 EASYESP MANIFEST V1 引脚声明块）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
 | `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop/MANIFEST 引脚声明核对等规则，`VIOLATION` 清零才交付；纯 Python 标准库，无第三方依赖 |
 | `scripts/ci_check.py` | CI 回归：validator 十一样本判定基线 + 资源表/坑编号/文档计数一致性检查 |
@@ -71,7 +71,7 @@
 | `CONTRIBUTING.md` | 贡献指南：文档规范、validator 纪律、沉淀流程 |
 
 <details>
-<summary><b>references/ 全部 24 份文档</b>（点开清单）</summary>
+<summary><b>references/ 全部 25 份文档</b>（点开清单）</summary>
 
 | 文档 | 内容 |
 |---|---|
@@ -82,6 +82,7 @@
 | `isr-and-concurrency-rules.md` | 中断纪律：IRAM_ATTR/FromISR/临界区方向/volatile/队列 |
 | `freertos-on-esp32.md` | FreeRTOS：任务/栈字节语义/优先级/核心绑定/看门狗 |
 | `peripheral-recipes.md` | 外设配方：GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812 |
+| `multibutton-input-fsm.md` | 按键输入状态机（MultiButton v1.1.1）：单击/双击/长按/连击分类、状态机精读、双轨集成、vendor 决策 |
 | `wifi-networking.md` | Wi-Fi 全栈：STA/AP/事件机/ESP-NOW/MQTT/HTTP/OTA 回滚 |
 | `ble-hid-arduino.md` | BLE HID 键盘：初始化序列/报告描述符/断连重广播/2.x-3.x 迁移 |
 | `realtime-control.md` | 实时控制：节拍源/超级循环/IMU 校准/互补滤波/PID/混控/安全状态机 |
