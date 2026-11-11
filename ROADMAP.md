@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project）十二份文档与坑清单 #36–81、#94–165，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay）十三份文档与坑清单 #36–81、#94–173，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -143,6 +143,17 @@
 | SKILL/README 收口 | 触发词（按键/单击/双击/长按/连击/状态机/MultiButton/防抖）+导航表+资源表+25 份计数 | ci_check 全绿 |
 
 同轮评估舍弃：Awesome-Embedded（纯链接目录，无 ESP32 特异性、非 agent 可直接执行的知识，链接时效差）。
+
+## 已沉淀（第十五轮：Wi-Fi NAT 中继路由 + 补挖指令）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| references/wifi-nat-relay.md | esp32s3-wifi-relay 转写（第 26 份）：APSTA+NAT 两调用/sdkconfig 最小集/信道跟随/README↔代码偏差实证（特性清单来自 martin-ger 上游） | 源工程已上板，转写未二次复测 |
+| 坑清单 #166–173 | Wi-Fi NAT 中继类 8 条（证据链污染/真实密码入库/NAPT 漏配/默认接口/信道跟随/无限重连/空密码 OPEN/无 captive portal） | 源自已上板工程静态审查 |
+| SKILL/README/quickref 收口 | 触发词（NAT/路由器/中继/APSTA/旅行路由）+路由+导航+资源表+全量映射 #1–173 | ci_check 全绿 |
+
+同轮评估舍弃：esplay-retro-emulation（空 Gitee 模板仓库，仅脚手架 README 零代码）。
+本轮起沉淀粒度升级：用户要求「补挖当时按模式压缩掉的具体细节」=转写保持细节级保真（帧协议/寄存器/时序具体事实，非模式级摘要）。
 
 ## 下一批候选主题
 

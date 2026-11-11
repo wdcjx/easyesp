@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–165 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏与 ESP32-CAM 双机小车）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–173 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏、ESP32-CAM 双机小车与 Wi-Fi NAT 中继路由）。API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -295,5 +295,20 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 163 | 【双机】TX/RX 交叉接好、双方共 3.3V，串口仍全收乱码或不通 | 没共地：UART 电平参考 GND，两板各自供电时 GND 不连则电平无参考（源 README 只提示了 RX/TX 交叉） | 任何跨板数字通信必连 GND（UART/I2C/SPI 通则）；接线表把 GND 列为第 0 线 |
 | 164 | 【双机】STM32 侧右后轮方向失控或不受控（跨 MCU 审查发现，以实测为准） | 方向脚选了 PB3/PB4（JTDO/NJTRST），复位后默认 JTAG 功能，代码未做 `GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable)` | 用 PB3/PB4 前先 SWJ remap 关 JTAG 留 SWD；或改选普通 IO；STM32 选脚先查默认复用 |
 | 165 | 【视频】开两个浏览器标签看画面后，小车控制明显变卡 | 伪 MJPEG 轮询在单 loop 线程同步 `send_P` 整帧 JPEG：多客户端争抢 fb_count=2 帧池，大响应阻塞同线程的 /control 命令 | 单客户端约定（UI 提示）；或切 esp_http_server multipart 流（独立任务/分块发送）；控制与视频分端点优先级化 |
+
+## Wi-Fi NAT 中继类（166–173）
+
+源自 esp32s3-wifi-relay（ESP32-S3 APSTA+NAT 路由器，ESP-IDF 5.5.5）源码精读；README 附实测清单，转写未二次复测。
+
+| # | 症状 | 根因 | 修法 |
+|---|---|---|---|
+| 166 | 按 README 用 `http://esp32-nat-router.local`、串口输 `help`、80 端口网页配置——全部没有 | README 特性清单与日志 transcript（console/Web/mDNS/ACL/PCAP）来自 martin-ger/esp32_nat_router 固件，仓库自身 main.c（586 行）无一行实现——文档证据链被上游污染 | 读代码定能力边界：本仓=最小 IDF5 NAT 骨架；要 Web 控制台直接用 martin-ger 上游 |
+| 167 | 公开仓库 README 里出现上级 Wi-Fi 真实 SSID+密码 | 「当前测试配置」整段提交了真实家庭网络凭证（作者自知并写了警示但没删） | 凭证走 NVS/配置文件+.gitignore；模板占位符；已泄露即改密码 |
+| 168 | `esp_netif_napt_enable` 链接报 undefined / 开了 NAPT 客户端仍不能上网 | sdkconfig 漏 `CONFIG_LWIP_IP4_NAPT=y`（NAPT 是 lwIP 可裁剪功能，默认关） | sdkconfig.defaults 固化 5 行最小集（NAPT/SOFTAP_SUPPORT/TCPIP_RECVMBOX_SIZE 等）；menuconfig 搜 NAPT 复核 |
+| 169 | NAPT 已 enable，AP 客户端流量却不出 STA | 未先 `esp_netif_set_default_netif(s_sta_netif)`：AP 侧包没有默认出口 | 顺序铁律：set_default_netif(STA) → napt_enable(AP netif) |
+| 170 | 上级路由器换信道后热点全体客户端掉线一阵；上级是 5 GHz 时完全中继不了 | APSTA 共用射频：SoftAP 信道被驱动强制跟随 STA 信道（`ap.channel` 只是初始值；实测日志 `new:<11,2> ap:<11,2> sta:<11,2>`） | 接受物理约束：只中继 2.4 GHz 上级；信道跟随的瞬断写进预期；勿试图锁 AP 信道 |
+| 171 | 照抄路由器重连逻辑到电池设备，永不休眠 | 事件层 ≤10 次重试→清零→睡 2s→再连=无限重连（常电场景正确，无配网回退） | 电池设备：重试 N 次进深睡/配网模式；常电路由器：本写法可抄 |
+| 172 | 想配 WPA2 热点，结果变成开放网络任何人可连 | `strlen(password)==0` 分支静默 fallback 到 `WIFI_AUTH_OPEN`——空密码编译期不报错 | 热点密码非空断言；开放热点是显式需求才走 fallback 分支 |
+| 173 | 上级断网时手机连热点「已连接」但所有网页打不开，也无提示 | STA 无 IP 时 AP 照常工作且 NAPT 照开（设计使然）：无 captive portal、无状态页 | AP 侧挂轻量状态页/LED 指示 STA 上联状态；或 captive portal DNS 劫持提示「等待上联」 |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。

@@ -11,7 +11,7 @@
 面向 AI agent 的 ESP32 固件开发知识技能：**双轨框架**（ESP-IDF 5.3.x 主轨 + Arduino arduino-esp32 3.x 副轨）、**三芯片覆盖**（经典 ESP32 / ESP32-S3 / ESP32-C3），带工程纪律检查器与沉淀机制。
 对标同作者的 STM32 技能（[embed](https://github.com/wdcjx/Embedded-programming)），把"能生成代码"升级为"能按老手纪律生成代码并静态自检"。
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project）十二份文档与坑清单 #36–81、#94–165，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay）十三份文档与坑清单 #36–81、#94–173，源自已上板运行的源工程，转写未二次复测）。
 > 每次生成都应声明"未经编译与上板验证"，并给出验证路径（idf.py build → flash → monitor）。
 
 ## 能力列表
@@ -42,6 +42,7 @@
 | BLE + 微信小程序外设 | GATT 单特征命令管道 / 小程序蓝牙 API 链 / touchRead 触摸键 / CW 时序与容错窗判分 / 断连重广播修复 / core 3.x 迁移 |
 | POV 裸眼 3D 风扇屏 | 极坐标映射数据模型 / WS2812 四臂 RMT 驱动 / 步进开环同步与软起动斜坡 / tjpgd 流式解码 / 视频离线预解 / 第三方 MQTT 云遥控 |
 | ESP32-CAM 双机协处理 | AI-Thinker 引脚预算 / esp_camera 初始化范式 / 伪 MJPEG 网页视频流 / 跨 MCU UART 协议 / SoftAP 现场控制台 / 死代码与协议漂移实证 |
+| Wi-Fi NAT 中继路由 | APSTA 双角色 / esp_netif_napt_enable 数据面 / sdkconfig 最小集 / 信道跟随约束 / 无限重连语义 / README↔代码偏差实证 |
 | 低功耗 | 深睡三档 / 唤醒源 / RTC 内存 / gpio_hold |
 
 **质量与排障**
@@ -51,7 +52,7 @@
 | 静态纪律检查 | `validate_esp_generated.py` 16 类规则：IRAM_ATTR / FromISR / 临界区方向 / 栈字节 / NVS-before-WiFi / BLE API 入 ISR / 任务回调阻塞 / Arduino loop / MANIFEST 引脚声明核对 / legacy 驱动 API（坑 #101）/ RS-485 DE 时序（坑 #120） |
 | 真实编译 CI | `build.yml`：`espressif/idf:v5.3.1` 容器对示例做 idf.py build（esp32/S3/C3 三目标）+ arduino-cli 1.5.1（core 3.3.12 锁版本）三块板编译；月度 cron 检测上游漂移 |
 | 引脚声明清单 | 工程主文件头部 `/* === EASYESP MANIFEST V1 === */` 声明块（target/pins），检查器核对声明与代码一致：芯片引脚存在性 / 一脚一功能 / 实际用脚全入表 |
-| 165 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 / MicroPython 商用工程 / Modbus 主机 / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机小车 |
+| 173 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 / MicroPython 商用工程 / Modbus 主机 / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机小车 / Wi-Fi NAT 中继 |
 | 症状速查 | Guru Meditation 转储 / 看门狗 / 复位原因 / WiFi 断连码 → 三步定位法 |
 | 量产就绪 | 内存泄漏与碎片 / 栈水位 / 弱网限流 / OTA 量产铁律 / 量产前 12 项检查清单 |
 
@@ -60,7 +61,7 @@
 | 路径 | 内容 |
 |---|---|
 | `SKILL.md` | 技能主文件：模式路由、六步工作流、11 条硬约束、自检清单、资源表（agent 的入口） |
-| `references/` | 25 份知识文档（逐份清单见下方） |
+| `references/` | 26 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架，含 EASYESP MANIFEST V1 引脚声明块）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
 | `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop/MANIFEST 引脚声明核对等规则，`VIOLATION` 清零才交付；纯 Python 标准库，无第三方依赖 |
 | `scripts/ci_check.py` | CI 回归：validator 十一样本判定基线 + 资源表/坑编号/文档计数一致性检查 |
@@ -72,7 +73,7 @@
 | `CONTRIBUTING.md` | 贡献指南：文档规范、validator 纪律、沉淀流程 |
 
 <details>
-<summary><b>references/ 全部 25 份文档</b>（点开清单）</summary>
+<summary><b>references/ 全部 26 份文档</b>（点开清单）</summary>
 
 | 文档 | 内容 |
 |---|---|
@@ -97,10 +98,11 @@
 | `ble-weapp-morse-trainer.md` | BLE+微信小程序外设（cw_esp32_ble_weapp 转写）：小程序蓝牙 API 链/GATT 单特征命令管道/断连重广播修复/touchRead 触摸键/CW 时序与容错窗/core 3.x 迁移 |
 | `pov-fan-display.md` | POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen 转写）：极坐标映射数据模型/步进开环同步与软起动/WS2812 四臂 RMT/tjpgd 流式解码/视频离线预解/第三方 MQTT 云遥控/IDF 4.4→5.3 迁移线 |
 | `esp32cam-stm32-bridge.md` | ESP32-CAM 双机协处理（stm32-car-project 转写）：AI-Thinker 引脚预算/摄像头初始化范式/伪 MJPEG 轮询流/跨 MCU UART 协议/死代码与协议漂移实证 |
+| `wifi-nat-relay.md` | Wi-Fi NAT 中继路由（esp32s3-wifi-relay 转写）：APSTA+NAT 两调用数据面/sdkconfig 最小集/信道跟随/README↔代码偏差实证 |
 | `production-readiness.md` | 量产工程纪律：内存泄漏与碎片/栈水位/弱网限流/OTA 铁律/低功耗分层/量产前检查清单 |
 | `power-and-sleep.md` | 低功耗：深睡范式/唤醒源/RTC 内存/gpio_hold |
-| `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位；症状→坑编号全量映射 #1–165 |
-| `known-pitfalls.md` | 165 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人/MicroPython 商用工程/Modbus 主机/BLE 小程序外设/POV 风扇屏/ESP32-CAM 双机小车，症状→根因→修法 |
+| `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位；症状→坑编号全量映射 #1–173 |
+| `known-pitfalls.md` | 173 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人/MicroPython 商用工程/Modbus 主机/BLE 小程序外设/POV 风扇屏/ESP32-CAM 双机小车/Wi-Fi NAT 中继，症状→根因→修法 |
 
 </details>
 

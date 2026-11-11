@@ -1,7 +1,7 @@
 # 症状速查（看到什么报文→先查什么）
 
 > 何时读：拿到错误日志/异常复位现象，先用本文把报文翻译成排查方向，再跳 known-pitfalls.md 对应编号。
-> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–165 全量：基础类见 §8，实战工程类（#36–165，含 MicroPython / Modbus / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机）见 §9
+> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–173 全量：基础类见 §8，实战工程类（#36–173，含 MicroPython / Modbus / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机 / Wi-Fi NAT 中继）见 §9
 
 ## 1. 排查方法论（三步）
 
@@ -139,7 +139,7 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 
 ## 8. 一页总表·基础类（症状关键词 → 先查 → pitfall 编号，#1–35）
 
-> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9；#125–138 BLE 小程序外设见 §9.9；#139–153 POV 风扇屏见 §9.10；#154–165 ESP32-CAM 双机小车见 §9.11。
+> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9；#125–138 BLE 小程序外设见 §9.9；#139–153 POV 风扇屏见 §9.10；#154–165 ESP32-CAM 双机小车见 §9.11；#166–173 Wi-Fi NAT 中继见 §9.12。
 
 | 症状关键词 | 先查 | pitfall |
 |---|---|---|
@@ -362,3 +362,16 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 | 交叉接线共 3.3V 仍乱码 | 跨板没共地 | 163 |
 | STM32 侧某轮方向失控 | PB3/PB4 未 SWJ remap | 164 |
 | 双标签看视频控制变卡 | 单线程 send_P 整帧阻塞 /control | 165 |
+
+### 9.12 Wi-Fi NAT 中继路由（166–173，源：wifi-nat-relay）
+
+| 症状 | 先查 | 编号 |
+|---|---|---|
+| README 写的 Web 控制台/mDNS/串口命令全没有 | 特性清单来自上游固件、代码无实现 | 166 |
+| 仓库公开后家里 Wi-Fi 被蹭 | README 提交真实 SSID+密码 | 167 |
+| napt_enable 链接失败或客户端不通 | CONFIG_LWIP_IP4_NAPT 未开 | 168 |
+| NAPT 开了但 AP 侧流量不出 | 未 set_default_netif(STA) | 169 |
+| 上级换信道热点集体瞬断 | APSTA 射频共享信道跟随 | 170 |
+| 照抄到电池设备永不休眠 | 路由器式无限重连无配网回退 | 171 |
+| 想配 WPA2 却成开放热点 | 空密码静默 fallback OPEN | 172 |
+| 上级断网热点能连网页全打不开 | AP 先活+无 captive portal 提示 | 173 |
