@@ -132,6 +132,8 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\skills\easyesp" -Target
 
 装好后在任意会话中提到 ESP32 / ESP-IDF / Arduino / WiFi / 点灯 等关键词即可自动触发，或直接点名 `easyesp`。
 
+**更新**：对 agent 说一句「更新 easyesp 技能」即可自动走对应方式——skills CLI 安装执行 `npx skills update`（原生子命令，读安装时生成的 `skills-lock.json` 定位来源并幂等覆盖）；clone 安装自动 `git pull origin main`（网络抖动自动重试）；DSH 技能库安装重新粘贴一次仓库 URL。更新后 agent 汇报版本变化（文档份数 / 坑条数 / 新增实战档）。
+
 ## 快速使用
 
 - **生成代码**：描述需求（芯片模组、外设、框架），agent 走六步工作流产出完整工程代码。

@@ -1,6 +1,6 @@
 ---
 name: easyesp
-description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖：工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA/NAT 中继路由）、低功耗深睡、BLE HID 键盘与微信小程序外设、实时控制（IMU/PID/混控/飞控）、IoT 网关、语音 AI 助手、MAX30102 心率血氧、电机控制与 CAN（TWAI/LQR/VMC）、Modbus/RS-485 主从站、Mind+ 教育机器人（MCPWM/PCNT）、POV 风扇屏、ESP32-CAM 双机协处理（摄像头/伪视频流/跨 MCU 串口桥）、量产工程纪律（内存泄漏与碎片/OTA 铁律/检查清单）；26 份领域文档（含按键输入状态机 MultiButton 模式） + 173 条实战坑清单 + 症状速查 + 静态检查器（MANIFEST 引脚核对）+ CI 真实编译三芯片。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、小智、语音助手、语音交互、WebSocket、唤醒词、音频、心率、血氧、MAX30102、FOC、电机控制、CAN、TWAI、LQR、VMC、平衡车、轮腿、MPU6050、Mind+、图形化编程、MCPWM、PCNT、编码器、H 桥、FPV、瑞龙、MicroPython、mpy、Modbus、RS485、485、CRC16、变频器、Tuya、涂鸦、Home Assistant、规则引擎、asyncio、微信小程序、weapp、小程序蓝牙、GATT、CW、莫尔斯、电键、触摸键、蜂鸣器、POV、视觉暂留、风扇屏、全息风扇、WS2812、灯带、步进电机、TMC2209、ESP32-CAM、esp_camera、摄像头、视频流、双机、协处理器、SoftAP、热点、WebServer、量产、上线、交付、检查清单、内存泄漏、内存碎片、断点续传、按键、单击、双击、长按、连击、按键状态机、MultiButton、去抖、防抖、消抖、NAT、路由器、中继、APSTA、旅行路由、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
+description: ESP32 嵌入式开发辅助技能：为 ESP32 / ESP32-S3 / ESP32-C3 生成完整可编译的固件代码。双轨框架——ESP-IDF 5.3.x（默认轨，内置 FreeRTOS）/ Arduino（arduino-esp32 3.x 副轨）——覆盖：工程构建闭环（idf.py/menuconfig/分区表/组件模型）、三芯片差异与引脚禁区、中断与并发纪律（IRAM_ATTR/FromISR/临界区）、FreeRTOS 任务与内存、外设配方（GPIO/UART/I2C/SPI/LEDC/ADC/NVS/gptimer/WS2812）、Wi-Fi 全栈（STA/AP/ESP-NOW/MQTT/HTTP/OTA/NAT 中继路由）、低功耗深睡、BLE HID 键盘与微信小程序外设、实时控制（IMU/PID/混控/飞控）、IoT 网关、语音 AI 助手、MAX30102 心率血氧、电机控制与 CAN（TWAI/LQR/VMC）、Modbus/RS-485 主从站、Mind+ 教育机器人（MCPWM/PCNT）、POV 风扇屏、ESP32-CAM 双机协处理（摄像头/伪视频流/跨 MCU 串口桥）、量产工程纪律（内存泄漏与碎片/OTA 铁律/检查清单）；26 份领域文档（含按键输入状态机 MultiButton 模式） + 173 条实战坑清单 + 症状速查 + 静态检查器（MANIFEST 引脚核对）+ CI 真实编译三芯片。两档模式：快速模式直接生成简单示例；工程纪律模式执行老手纪律（ISR 瘦身、volatile 与临界区、等待带超时、NVS 先于 WiFi、栈按字节精算，VIOLATION 清零）。当用户提到 ESP32、ESP32-S3、ESP32-C3、单片机、嵌入式、ESP-IDF、idf.py、menuconfig、sdkconfig、分区表、Arduino、ino、sketch、WiFi、ESP-NOW、MQTT、HTTP、OTA、NVS、Preferences、FreeRTOS、任务/队列/信号量、低功耗、深度睡眠、看门狗、Guru Meditation、brownout、GPIO、点灯、串口、UART、PWM、LEDC、ADC、I2C、SPI、传感器、BLE、NimBLE、HID、蓝牙键盘、飞控、无人机、IMU、PID、混控、PubSubClient、网关、心跳、小智、语音助手、语音交互、WebSocket、唤醒词、音频、心率、血氧、MAX30102、FOC、电机控制、CAN、TWAI、LQR、VMC、平衡车、轮腿、MPU6050、Mind+、图形化编程、MCPWM、PCNT、编码器、H 桥、FPV、瑞龙、MicroPython、mpy、Modbus、RS485、485、CRC16、变频器、Tuya、涂鸦、Home Assistant、规则引擎、asyncio、微信小程序、weapp、小程序蓝牙、GATT、CW、莫尔斯、电键、触摸键、蜂鸣器、POV、视觉暂留、风扇屏、全息风扇、WS2812、灯带、步进电机、TMC2209、ESP32-CAM、esp_camera、摄像头、视频流、双机、协处理器、SoftAP、热点、WebServer、量产、上线、交付、检查清单、内存泄漏、内存碎片、断点续传、按键、单击、双击、长按、连击、按键状态机、MultiButton、去抖、防抖、消抖、NAT、路由器、中继、APSTA、旅行路由、更新技能、自更新、检查更新、更新 easyesp、生成/编写/审查/检查/规范代码、跑 validate 等需求时使用。
 ---
 
 # easyesp — 嵌入式（ESP32）开发辅助技能
@@ -121,6 +121,16 @@ Arduino 轨三个高阶场景走专项文档：**BLE HID 键盘/外设**读 [ref
 | `scripts/validate_esp_generated.py` | 静态纪律检查（VIOLATION 清零才交付；含 EASYESP MANIFEST V1 引脚声明核对、legacy 驱动 API 警告、RS-485 DE 时序；厂商目录自动跳过；MicroPython 轨无静态检查，人工按 references/micropython-env-controller.md §2 纪律核对） |
 | `examples/blink_uart_demo/` | 完整可编译 IDF 试例：点灯+日志（未上板） |
 | `tests/bad_sample*.c*` | 故意违规样本（含 BLE 反例/正例 .cpp），自测检查脚本用 |
+
+## 自更新
+
+用户说「更新 easyesp / 更新技能 / 检查更新」时执行（只动本技能目录，不碰用户工程与其它配置）：
+
+1. **定位技能目录**：依次探测 `~/.claude/skills/easyesp` → `~/.dsh/skills/easyesp` → 当前 SKILL.md 所在目录；junction/符号链接先解析到真实目标（更新源检出，链接自动跟随）。
+2. **有 `.git`（clone 安装）**：`git pull --ff-only origin main`；网络抖动（Connection reset / 超时）属常态，间隔递增重试 3–5 次，仍失败如实报告并建议挂代理或稍后再试。工作区有本地改动时先 `git status --porcelain` 列给用户，征得同意再 `--autostash`，不要盲 reset。
+3. **无 `.git`（skills CLI 安装的快照副本）**：`npx skills update`（别名 `upgrade`）——CLI 原生更新，读安装时生成的 `skills-lock.json` 定位来源并幂等覆盖；无 lock 文件或失败时退回 `npx skills add wdcjx/easyesp` 重装。
+4. **DSH 技能库粘贴安装**：侧边栏技能库重新粘贴仓库 URL 安装（重新拉取覆盖）。
+5. **更新后报告**：读 [ROADMAP.md](ROADMAP.md) 头部状态行，汇报「更新前 → 更新后」的文档份数 / 坑条数 / 新增实战档；clone 形态加报新旧 commit（`git describe --tags --always` 或 `git log --oneline -3`）。
 
 ## 维护与沉淀
 

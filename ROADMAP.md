@@ -155,6 +155,13 @@
 同轮评估舍弃：esplay-retro-emulation（空 Gitee 模板仓库，仅脚手架 README 零代码）。
 本轮起沉淀粒度升级：用户要求「补挖当时按模式压缩掉的具体细节」=转写保持细节级保真（帧协议/寄存器/时序具体事实，非模式级摘要）。
 
+## 已沉淀（第十六轮：自更新指令）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| SKILL.md「自更新」节 | 用户说「更新 easyesp」→ agent 定位技能目录（.claude/.dsh 依次探测）→ 三层更新：clone 形态 `git pull --ff-only` 带重试 / skills CLI 形态 `npx skills update`（原生，读 skills-lock.json）/ DSH 形态重新粘贴安装 → 读 ROADMAP 头部报告版本变化 | 纯指令文档，无代码 |
+| README 安装节「更新」段 + 触发词 | 更新技能/自更新/检查更新/更新 easyesp | ci_check 全绿 |
+
 ## 下一批候选主题
 
 - IDF 轨 BLE（NimBLE-IDF：GATT 自定义服务/主机扫描）——Arduino 轨 HID 已沉淀，本条只剩 IDF 轨
