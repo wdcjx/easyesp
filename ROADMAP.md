@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay）十三份文档与坑清单 #36–81、#94–173，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering）十四份文档与坑清单 #36–81、#94–187，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -161,6 +161,14 @@
 |---|---|---|
 | SKILL.md「自更新」节 | 用户说「更新 easyesp」→ agent 定位技能目录（.claude/.dsh 依次探测）→ 三层更新：clone 形态 `git pull --ff-only` 带重试 / skills CLI 形态 `npx skills update`（原生，读 skills-lock.json）/ DSH 形态重新粘贴安装 → 读 ROADMAP 头部报告版本变化 | 纯指令文档，无代码 |
 | README 安装节「更新」段 + 触发词 | 更新技能/自更新/检查更新/更新 easyesp | ci_check 全绿 |
+
+## 已沉淀（第十七轮：IoT 浇水控制器）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| references/watering-iot-mqtt.md | esp32-watering 转写（第 27 份）：双设备形态（ESP32 传感器端 + ESP-01 继电器端）/土壤湿度实测标定表/L9110S 真值表/无 NTP 校时四步/设备端 MQTT 契约与语义漂移 | 源工程已上板（服务端已部署），转写未二次复测 |
+| 坑清单 #174–187 | IoT 浇水/设备端 MQTT 类 14 条（明文凭证/网络阻塞拖长浇水/RTC 跳变/ACK 语义相反/文档方向写反/ADC 当百分比等） | 源自已上板工程静态审查 |
+| SKILL/README/quickref 收口 | 触发词（浇水/灌溉/土壤湿度/水泵/继电器/L9110S/LWT）+路由+导航+资源表+全量映射 #1–187 | ci_check 全绿 |
 
 ## 下一批候选主题
 
