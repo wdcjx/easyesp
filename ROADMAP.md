@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering）十四份文档与坑清单 #36–81、#94–187，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob）十六份文档与坑清单 #36–81、#94–203，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -169,6 +169,17 @@
 | references/watering-iot-mqtt.md | esp32-watering 转写（第 27 份）：双设备形态（ESP32 传感器端 + ESP-01 继电器端）/土壤湿度实测标定表/L9110S 真值表/无 NTP 校时四步/设备端 MQTT 契约与语义漂移 | 源工程已上板（服务端已部署），转写未二次复测 |
 | 坑清单 #174–187 | IoT 浇水/设备端 MQTT 类 14 条（明文凭证/网络阻塞拖长浇水/RTC 跳变/ACK 语义相反/文档方向写反/ADC 当百分比等） | 源自已上板工程静态审查 |
 | SKILL/README/quickref 收口 | 触发词（浇水/灌溉/土壤湿度/水泵/继电器/L9110S/LWT）+路由+导航+资源表+全量映射 #1–187 | ci_check 全绿 |
+
+## 已沉淀（第十八轮：IDF 轨摄像头图传 + 力反馈旋钮）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| references/idf-camera-mjpeg.md | esp-idf-camera 转写（第 28 份）：esp32-camera 组件/Kconfig 表/初始化序列/配网托管/真 MJPEG 三段式+自适应质量 | 源工程已上板，转写未二次复测 |
+| references/lvgl-knob-haptics.md | super_knob 转写（第 29 份）：SimpleFOC 触感算法五机制/5 档预设/LVGL 圆屏端口/任务并发纪律/BLE 媒体键 | 源工程已上板；SimpleFOC 与 core 4.1.0 绑定需注意 |
+| 坑清单 #188–203 | 摄像头 IDF 轨 6 条 + 力反馈旋钮 10 条 | 源自已上板工程源码审查 |
+| SKILL/README/quickref 收口 | 触发词（摄像头图传/MJPEG/力反馈/旋钮/LVGL/圆屏等）+路由两行+导航表两行+映射 #1–203 | ci_check 全绿 |
+
+补记：本轮曾怀疑 esp-idf-camera 的 `\r\n` 双重转义是 MJPEG 分帧 bug，经 xxd 验证为检查器显示假象，**非 bug**，已从候选坑中剔除。
 
 ## 下一批候选主题
 
