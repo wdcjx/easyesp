@@ -181,6 +181,15 @@
 
 补记：本轮曾怀疑 esp-idf-camera 的 `\r\n` 双重转义是 MJPEG 分帧 bug，经 xxd 验证为检查器显示假象，**非 bug**，已从候选坑中剔除。
 
+## 已沉淀（第十九轮：validator 审查修复——esp_event 检测空转等 3 项）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| validator 三项修复 | ①铁律 B 对 esp_event 处理器漏检（正则抓到事件 ID 而非第 3/4 实参 handler，改 split_top_args 取参）；②打错的文件名静默跳过（改为显式 WARNING）；③读失败警告被单变量覆盖丢失（改逐文件累积） | 新样本 tests/bad_sample_esp_event.c FAIL V=1 精确命中；十二样本基线全绿 |
+| 卫生清理 | vTaskDelete 的 `if False` 遗留三元式删除；main_idf.c 的 button_isr_init 整体移入 `#ifdef USE_BUTTON_ISR`（消除未启用时的空 static 函数） | ci_check 全绿（18 项） |
+
+来源：外部审查报告（m03209）实证发现——同款阻塞代码走 esp_timer `.callback=` 正确 FAIL、走 esp_event 注册则 PASS，证明检测路径空转。
+
 ## 下一批候选主题
 
 - IDF 轨 BLE（NimBLE-IDF：GATT 自定义服务/主机扫描）——Arduino 轨 HID 已沉淀，本条只剩 IDF 轨

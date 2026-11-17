@@ -71,8 +71,8 @@ TASKCB_REGISTRATION_RES = [
     re.compile(r"\.callback\s*=\s*(?:&\s*)?([A-Za-z_]\w*)"),          # esp_timer_create_args_t
     re.compile(r"\besp_timer_start_(?:once|periodic)\s*\(\s*[A-Za-z_]\w*\s*,\s*(?:&\s*)?([A-Za-z_]\w*)"),
     re.compile(r"\besp_now_register_(?:recv|send)_cb\s*\(\s*(?:&\s*)?([A-Za-z_]\w*)"),
-    re.compile(r"\besp_event_handler_register(?:_with)?\s*\([^;]*?,\s*&?([A-Za-z_]\w*)"),
-    re.compile(r"\besp_http_client_register_event_handler\s*\([^,]+,\s*&?([A-Za-z_]\w*)"),
+    # esp_event_handler_register(_with) 的 handler 是第 3/4 个实参，正则抓不到——见 collect_esp_event_handlers()
+    re.compile(r"\.handler\s*=\s*(?:&\s*)?([A-Za-z_]\w*)"),      # esp_http_client_event_t 等结构体初始化器/赋值
     re.compile(r"\bsetCallbacks\s*\(\s*(?:&\s*)?([A-Za-z_]\w*)\s*\)"),                # 经典 BLE/NimBLE server/characteristic
     re.compile(r"\bWiFi\s*\.\s*onEvent\s*\(\s*&?([A-Za-z_]\w*)"),                     # Arduino WiFi 事件
 ]
@@ -96,15 +96,13 @@ RTOS_TASK_API_MAP = {
     "xMessageBufferSend": "xMessageBufferSendFromISR",
     "vTaskResume": "xTaskResumeFromISR",
     "vTaskPrioritySet": None,
-    "vTaskDelete": "vTaskDeleteFromISR" if False else "xTaskDeleteFromISR",  # IDF: xTaskDelete? 见下
+    "vTaskDelete": None,                    # 中断内禁删任务（无 FromISR 版本）
     "vTaskDelay": None,
     "vTaskDelayUntil": None,
     "vTaskSuspend": None,
     "xTaskCreate": None,
     "xTaskCreatePinnedToCore": None,
 }
-# ESP-IDF 实际 API：任务里删任务用 vTaskDelete；中断里没有 FromISR 版——中断内禁删任务。
-RTOS_TASK_API_MAP["vTaskDelete"] = None
 
 # FromISR API（反向：任务上下文禁止）
 FROMISR_API_RE = re.compile(r"\b([A-Za-z_]\w*FromISR)\s*\(")
@@ -262,6 +260,24 @@ def split_top_args(s):
     return args
 
 
+def collect_esp_event_handlers(text):
+    """esp_event_handler_register(base, id, handler, arg) 与
+    esp_event_handler_register_with(loop, base, id, handler, arg) 的 handler
+    分别是第 3/4 个实参。旧正则 `[^;]*?,\\s*&?(ident)` 抓到的是第一个逗号后的
+    事件 ID（如 WIFI_EVENT_STA_START），导致铁律 B 对 esp_event 处理器完全空转。"""
+    out = set()
+    for m in re.finditer(r"\besp_event_handler_register(?:_with)?\s*\(", text):
+        op = m.end() - 1
+        cp = match_paren(text, op)
+        args = split_top_args(text[op + 1: cp])
+        idx = 3 if "_with" in m.group(0) else 2
+        if len(args) > idx:
+            h = re.fullmatch(r"\s*&?\s*([A-Za-z_]\w*)\s*", args[idx])
+            if h and h.group(1) != "NULL":
+                out.add(h.group(1))
+    return out
+
+
 def in_spans(pos, spans):
     return any(a <= pos <= b for a, b in spans)
 
@@ -323,6 +339,7 @@ def analyze(path, text, findings, irq_owner, project):
     task_cbs = set()
     for r in TASKCB_REGISTRATION_RES:
         task_cbs |= set(r.findall(text))
+    task_cbs |= collect_esp_event_handlers(text)
 
     def is_true_isr(f):
         n = f["name"]
@@ -674,11 +691,13 @@ def main(argv=None):
                       "middlewares", "libraries", "dependencies")
     to_check = []
     skipped = 0
+    missing = []                       # (显示名, 提示) —— 打错的文件名必须可见，不能静默丢弃
     for p in paths:
         if args.dir and any(part.lower() in SKIP_DIR_PARTS for part in p.parts):
             skipped += 1
             continue
         if not p.is_file():
+            missing.append((str(p), f"文件不存在，已跳过：{p}"))
             continue
         to_check.append(p)
     if not to_check:
@@ -687,6 +706,7 @@ def main(argv=None):
 
     texts = {}
     manifests = {}
+    findings = []                      # 逐文件累积：读失败警告不得被后续文件覆盖或吞掉
     for p in to_check:
         try:
             raw = p.read_text(encoding="utf-8", errors="replace")
@@ -695,10 +715,8 @@ def main(argv=None):
                 manifests[p] = mf
             texts[p] = neutralize(raw)
         except OSError as exc:
-            findings_pre = (str(p), 0, WARN, f"无法读取：{exc}")
+            findings.append((str(p), 0, WARN, f"无法读取：{exc}"))
             texts[p] = ""
-        else:
-            findings_pre = None
 
     # 工程级事实：NVS 初始化是否存在于任意被检查文件
     combined = "\n".join(texts.values())
@@ -708,9 +726,8 @@ def main(argv=None):
         "manifests": manifests,
     }
 
-    findings = []
-    if findings_pre:
-        findings.append(findings_pre)
+    for fname, msg in missing:
+        findings.append((fname, 0, WARN, msg))
     irq_owner = {}
     checked = 0
     for p, text in texts.items():

@@ -117,11 +117,9 @@ static void IRAM_ATTR btn_isr_handler(void *arg)
     (void)arg;
     s_btn_pressed = true;                     /* 只置标志，主循环处理 */
 }
-#endif
 
 static void button_isr_init(void)             /* 参考实现，用再启用 */
 {
-#ifdef USE_BUTTON_ISR
     gpio_config_t io = {
         .pin_bit_mask = 1ULL << BTN_PIN,
         .mode         = GPIO_MODE_INPUT,
@@ -131,5 +129,5 @@ static void button_isr_init(void)             /* 参考实现，用再启用 */
     gpio_config(&io);
     ESP_ERROR_CHECK(gpio_install_isr_service(ESP_INTR_FLAG_IRAM));
     ESP_ERROR_CHECK(gpio_isr_handler_add(BTN_PIN, btn_isr_handler, NULL));
-#endif
 }
+#endif
