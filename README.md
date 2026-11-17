@@ -9,7 +9,7 @@
 [![unique cloners](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwdcjx%2Feasyesp%2Fmain%2Fdocs%2Ftraffic.json&query=%24.clones.uniques&label=unique%20cloners&color=blue)](https://github.com/wdcjx/easyesp/blob/main/docs/traffic_summary.md)
 
 面向 AI agent 的 ESP32 固件开发知识技能：**双轨框架**（ESP-IDF 5.3.x 主轨 + Arduino arduino-esp32 3.x 副轨）、**三芯片覆盖**（经典 ESP32 / ESP32-S3 / ESP32-C3），带工程纪律检查器与沉淀机制。
-对标同作者的 STM32 技能（[embed](https://github.com/wdcjx/Embedded-programming)），把"能生成代码"升级为"能按老手纪律生成代码并静态自检"。
+对标同作者的 STM32 技能（[embed](https://github.com/wdcjx/Embedded-programming)），把"能生成代码"升级为"能按老手纪律生成代码并静态自检"。版本化发布：[CHANGELOG](CHANGELOG.md) · [Releases](https://github.com/wdcjx/easyesp/releases)；已安装的技能可让 agent 一句「更新 easyesp 技能」完成升级（见[安装](#安装)节）。
 
 > 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob）十六份文档与坑清单 #36–81、#94–203，源自已上板运行的源工程，转写未二次复测）。
 > 每次生成都应声明"未经编译与上板验证"，并给出验证路径（idf.py build → flash → monitor）。

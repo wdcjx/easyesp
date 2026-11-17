@@ -6,6 +6,13 @@
 
 工程化加固轮（源自外部审查 + m03292 优先级清单）：
 
+- **新增实战文档 4 份**（25→29 份，坑 165→203 条）：Wi-Fi NAT 中继路由
+  （esp32s3-wifi-relay，#166–173）、IoT 浇水控制器（esp32-watering，#174–187）、
+  IDF 轨摄像头图传（esp-idf-camera，#188–193）、力反馈旋钮与 LVGL 圆屏
+  （super_knob，#194–203）；症状速查映射同步扩至 #1–203。
+- **技能自更新**：SKILL.md 新增「自更新」节——agent 定位安装目录后三层更新
+  （git pull --ff-only 带重试 / `npx skills update`（skills CLI 原生，读
+  skills-lock.json）/ DSH 技能库重装），更新后汇报版本变化。
 - **validator v1.1.0**：规则稳定 ID（R1–R15 纪律类 / M1–M6 MANIFEST 类 / R99 输入类）+
   `--format json` 结构化输出（validator_version / result / findings[{file,line,level,rule,message}]）。
 - **跨文件聚合检查**：M5 同一 GPIO 被多个文件声明占用、M6 target 芯片冲突（多组件工程引脚
