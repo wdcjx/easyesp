@@ -209,3 +209,15 @@
 1. 使用中发现新坑/新配方 → 征得用户同意后写回对应 `references/` 文档（保持"何时读/状态"头部两行）。
 2. 改进检查规则 → 更新 `validate_esp_generated.py` 并跑反例自测（`tests/`）确认无回归。
 3. 实测完成 → 更新 `SKILL.md` 头部实测状态声明与本表"待验证"清单，记录芯片型号与工程类型。
+
+## 已沉淀（第二十轮：工程化加固——规则 ID/跨文件聚合/规则单测/供应链钉版）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| validator v1.1.0 | 规则稳定 ID（R1–R15 纪律类/M1–M6 MANIFEST 类/R99 输入类）+ `--format json` 结构化输出；消息措辞与 RULE_TABLE 失配返回 R0 由单测报警 | JSON 冒烟：bad_sample_isr 命中 R1/R11/R2/R3/R4/R5/R6 |
+| 跨文件聚合 | cross_check()：M5 同一 GPIO 被多文件声明、M6 target 冲突（≥2 manifest 触发，"PROJECT(聚合)" 记账） | tests/manifest_ok PASS / project_conflict FAIL V1 / target_conflict FAIL V1 |
+| 规则级单测 | tests/run_rule_tests.py 21 例（每规则最小片段，断言命中 ID+无 R0+result 符合）；教训：M4 消息实际为「但未在 MANIFEST pins 声明」，RULE_TABLE 按实测措辞定稿 | 21/21 PASS |
+| ci_check 扩容 | 目录条目 glob 支持（三目录基线）+ 第 7 项规则级单测，15 validator 条目 + 一致性 + 单测 | 全绿 |
+| 供应链钉版 | 三 workflow 六处 uses 全钉 commit SHA（**arduino/setup-arduino-cli 的 @v2 实为浮动分支**，API 实证 refs/heads/v2；已钉 v2.1.0 提交 b3cda96）；.gitattributes 统一行尾（CRLF rebase 冲突根治） | 待 CI 首跑验证（本提交） |
+| evals 静态测试 | 四份任务书（Wi-Fi 重连+NVS / BLE HID / 低功耗传感器 / RS-485 主机轮询）+ README 运行说明；不引在线服务 | 静态交付，首次评测后回写结果 |
+| 版本化 | SKILL.md frontmatter `version: 1.1.0`；CHANGELOG.md（1.0.0=2026-11-11 发行 / 1.1.0=本轮） | README 供应链行同步 |

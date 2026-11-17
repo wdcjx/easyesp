@@ -43,7 +43,7 @@ jobs:
         target: [esp32, esp32s3, esp32c3]
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Build blink_uart_demo
         shell: bash
@@ -63,9 +63,9 @@ jobs:
         board: [esp32, esp32s3, esp32c3]
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: arduino/setup-arduino-cli@v2
+      - uses: arduino/setup-arduino-cli@b3cda96fddef6af6c56b4c5efb5c47e2357935db # v2.1.0
         with:
           version: '1.5.1'
 

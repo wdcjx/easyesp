@@ -54,6 +54,7 @@
 |---|---|
 | 静态纪律检查 | `validate_esp_generated.py` 16 类规则：IRAM_ATTR / FromISR / 临界区方向 / 栈字节 / NVS-before-WiFi / BLE API 入 ISR / 任务回调阻塞 / Arduino loop / MANIFEST 引脚声明核对 / legacy 驱动 API（坑 #101）/ RS-485 DE 时序（坑 #120） |
 | 真实编译 CI | `build.yml`：`espressif/idf:v5.3.1` 容器对示例做 idf.py build（esp32/S3/C3 三目标）+ arduino-cli 1.5.1（core 3.3.12 锁版本）三块板编译；月度 cron 检测上游漂移 |
+| 供应链钉版 | 三个 workflow 的 actions 全部钉 commit SHA（arduino/setup-arduino-cli 的 `@v2` 实为浮动分支，已钉 v2.1.0 提交）；`.gitattributes` 统一行尾；版本见 `CHANGELOG.md` |
 | 引脚声明清单 | 工程主文件头部 `/* === EASYESP MANIFEST V1 === */` 声明块（target/pins），检查器核对声明与代码一致：芯片引脚存在性 / 一脚一功能 / 实际用脚全入表 |
 | 203 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 / MicroPython 商用工程 / Modbus 主机 / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机小车 / Wi-Fi NAT 中继 / IoT 浇水 / 摄像头 IDF 轨 / 力反馈旋钮 |
 | 症状速查 | Guru Meditation 转储 / 看门狗 / 复位原因 / WiFi 断连码 → 三步定位法 |
@@ -67,10 +68,12 @@
 | `references/` | 29 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架，含 EASYESP MANIFEST V1 引脚声明块）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
 | `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop/MANIFEST 引脚声明核对等规则，`VIOLATION` 清零才交付；纯 Python 标准库，无第三方依赖 |
-| `scripts/ci_check.py` | CI 回归：validator 十二样本判定基线 + 资源表/坑编号/文档计数一致性检查 |
+| `scripts/ci_check.py` | CI 回归：validator 十二样本 + 跨文件 manifest 三目录基线 + 规则级单测（run_rule_tests.py）+ 资源表/坑编号/文档计数一致性检查 |
 | `examples/blink_uart_demo/` | 完整可编译的最小 IDF 工程示例（点灯 + 日志；CI 三目标 idf.py build） |
 | `examples/arduino_blink_uart/` | Arduino 轨最小 sketch（blink + 心跳；CI 用 arduino-cli 三块板编译） |
-| `tests/bad_sample*.c*` | 故意违规的反例样本（含 BLE、MANIFEST、RS-485 DE 时序反例），用于检查器自测 |
+| `tests/bad_sample*.c*` | 故意违规的反例样本（含 BLE、MANIFEST、RS-485 DE 时序、esp_event 阻塞反例），用于检查器自测 |
+| `tests/rule_snippets/` + `tests/run_rule_tests.py` | 规则级单测：R1–R15/M1–M6 每条规则一个最小片段，断言命中规则 ID 且无 R0（消息措辞与 RULE_TABLE 失配立即报警） |
+| `tests/manifest_ok/` `tests/project_conflict/` `tests/target_conflict/` | 跨文件聚合样本：多组件引脚冲突（M5）与 target 冲突（M6）的正反例 |
 | `.github/` | CI 工作流（ci.yml 静态回归、build.yml 真实编译）、流量记录（traffic-record.yml）、Issue 模板（bug 反馈 / 知识沉淀建议） |
 | `ROADMAP.md` | 沉淀进度与下一批主题 |
 | `CONTRIBUTING.md` | 贡献指南：文档规范、validator 纪律、沉淀流程 |
@@ -145,8 +148,9 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\skills\easyesp" -Target
 - **生成代码**：描述需求（芯片模组、外设、框架），agent 走六步工作流产出完整工程代码。
 - **纪律检查**：`python scripts/validate_esp_generated.py <文件...>` 或 `--dir <目录>`；退出码 0=通过、1=有 VIOLATION、2=用法错误。
 - **故障排查**：贴 Guru Meditation / WDT / 复位日志，走 `references/symptom-quickref.md` 三步法。
-- **检查器自测**：`python scripts/validate_esp_generated.py tests/bad_sample_isr.c tests/bad_sample_task.c tests/bad_sample_ble.cpp tests/manifest_bad_sample.c tests/bad_sample_rs485.c tests/bad_sample_esp_event.c`（应 FAIL），再对 `templates/main_idf.c tests/good_sample_ble.cpp tests/manifest_good_sample.c examples/blink_uart_demo/main/blink_uart_demo.c examples/arduino_blink_uart/arduino_blink_uart.ino`（应 PASS）。
-- **CI 全量回归**：`python scripts/ci_check.py`（validator 十二样本基线 + 一致性检查，与 GitHub Actions ci.yml 相同；build.yml 另做真实编译）。
+- **检查器自测**：`python scripts/validate_esp_generated.py tests/bad_sample_isr.c tests/bad_sample_task.c tests/bad_sample_ble.cpp tests/manifest_bad_sample.c tests/bad_sample_rs485.c tests/bad_sample_esp_event.c`（应 FAIL），再对 `templates/main_idf.c tests/good_sample_ble.cpp tests/manifest_good_sample.c examples/blink_uart_demo/main/blink_uart_demo.c examples/arduino_blink_uart/arduino_blink_uart.ino`（应 PASS）；结构化输出用 `--format json`（规则 ID/行号/级别）。
+- **规则级单测**：`python tests/run_rule_tests.py`（21 例：R1–R15/M1–M6 每条规则一个最小片段）。
+- **CI 全量回归**：`python scripts/ci_check.py`（validator 十二样本 + 跨文件三目录 + 规则单测 + 一致性检查，与 GitHub Actions ci.yml 相同；build.yml 另做真实编译）。
 
 ## 参与贡献
 

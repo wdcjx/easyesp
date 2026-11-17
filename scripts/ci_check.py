@@ -8,6 +8,10 @@ CI 中由 .github/workflows/ci.yml 调用，exit 0 = 全部通过。
 检查项：
   1. validator 十二样本基线（六 bad_sample 必须 FAIL 且违规/警告数精确匹配，
      六正例必须 PASS 且违规=0）——防规则漂移（误报/漏报都会被抓住）
+  1b. 跨文件 manifest 目录基线（manifest_ok 两文件 PASS / project_conflict
+     M5 FAIL / target_conflict M6 FAIL）——目录条目自动 glob 全部 .c/.ino
+  1c. 规则级单测 tests/run_rule_tests.py（R1-R15/M1-M6 每条规则一个最小片段，
+     断言命中规则 ID、无 R0、result 符合预期）
   2. references/ 目录与 SKILL.md 资源表双向一致（表里有的文件必须存在；
      目录里的文档必须都在表中）
   3. known-pitfalls.md 坑编号连续 1..N（无重号/跳号；表格格式 `| N |`）
@@ -18,6 +22,7 @@ CI 中由 .github/workflows/ci.yml 调用，exit 0 = 全部通过。
   真实编译验证（idf.py build 三目标 + arduino-cli 三板）在
   .github/workflows/build.yml——本脚本只做静态一致性回归。
 """
+import glob
 import os
 import re
 import subprocess
@@ -40,6 +45,10 @@ BASELINE = [
     ('templates/main_arduino.ino',                   'PASS', 0,  0),
     ('examples/blink_uart_demo/main/blink_uart_demo.c', 'PASS', 0, 0),
     ('examples/arduino_blink_uart/arduino_blink_uart.ino', 'PASS', 0, 0),
+    # 目录条目：glob 全部源文件一起送检（跨文件 M5/M6 聚合需要多 manifest）
+    ('tests/manifest_ok/',                          'PASS', 0,  0),
+    ('tests/project_conflict/',                     'FAIL', 1,  0),
+    ('tests/target_conflict/',                      'FAIL', 1,  0),
 ]
 
 failures = []
@@ -54,12 +63,22 @@ def check(name, ok, detail=''):
 # ---------- 1. validator 基线 ----------
 for rel, verdict, exp_v, exp_w in BASELINE:
     path = os.path.join(ROOT, rel)
-    if not os.path.isfile(path):
+    if os.path.isdir(path):                       # 目录条目：glob 源文件整体送检
+        srcs = sorted(sum([glob.glob(os.path.join(path, '*' + ext))
+                           for ext in ('.c', '.cpp', '.ino')], []))
+        if not srcs:
+            check(f"validator: {rel} 存在源文件", False, '目录为空')
+            continue
+        r = subprocess.run([sys.executable, VAL] + srcs,
+                           capture_output=True, text=True,
+                           encoding='utf-8', errors='replace')
+    elif os.path.isfile(path):
+        r = subprocess.run([sys.executable, VAL, path],
+                           capture_output=True, text=True,
+                           encoding='utf-8', errors='replace')
+    else:
         check(f"validator: {rel} 存在", False, '文件缺失')
         continue
-    r = subprocess.run([sys.executable, VAL, path],
-                       capture_output=True, text=True,
-                       encoding='utf-8', errors='replace')
     m = re.search(r'违规\(VIOLATION\):\s*(\d+)\s+警告\(WARNING\):\s*(\d+)', r.stdout)
     v = re.search(r'结果:\s*(PASS|FAIL)', r.stdout)
     got_verdict = v.group(1) if v else '?'
@@ -112,6 +131,14 @@ ref_names = {f for f in os.listdir(os.path.join(ROOT, 'references'))
 not_in_readme = sorted(ref_names - readme_md_names)
 check('README 文件树覆盖 references 全部文档', not not_in_readme,
       f'README 未提及: {not_in_readme}' if not_in_readme else '')
+
+# ---------- 7. 规则级单测（R1-R15/M1-M6 每条规则一个最小片段）----------
+rr = os.path.join(ROOT, 'tests', 'run_rule_tests.py')
+r = subprocess.run([sys.executable, rr], capture_output=True, text=True,
+                   encoding='utf-8', errors='replace')
+tail = [ln for ln in r.stdout.splitlines() if ln.startswith('--')]
+check('规则级单测 run_rule_tests.py', r.returncode == 0,
+      (tail[0] if tail else '') if r.returncode == 0 else r.stdout.strip()[-200:])
 
 print()
 if failures:

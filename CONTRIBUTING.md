@@ -47,6 +47,7 @@
 # validator 基线
 python scripts/validate_esp_generated.py tests/bad_sample_isr.c tests/bad_sample_task.c tests/bad_sample_ble.cpp tests/manifest_bad_sample.c tests/bad_sample_rs485.c tests/bad_sample_esp_event.c  # 应 FAIL
 python scripts/validate_esp_generated.py templates/main_idf.c tests/good_sample_ble.cpp tests/manifest_good_sample.c examples/blink_uart_demo/main/blink_uart_demo.c examples/arduino_blink_uart/arduino_blink_uart.ino  # 应 PASS
+python tests/run_rule_tests.py  # 规则级单测 21 例
 
 # CI 全量回归（与 GitHub Actions 完全一致）
 python scripts/ci_check.py

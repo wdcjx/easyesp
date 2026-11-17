@@ -27,10 +27,13 @@ validate_esp_generated.py — ESP32（ESP-IDF / Arduino）生成代码工程纪�
     无 MANIFEST 的文件跳过全部 M 系列检查（向后兼容）。
   - 自测：python validate_esp_generated.py ../tests/bad_sample_isr.c ../tests/bad_sample_task.c
     应报多条 VIOLATION；../templates/main_idf.c 应 PASS。
-    基线回归以 scripts/ci_check.py（十一样本）为准。
+    基线回归以 scripts/ci_check.py（十二样本）+ tests/run_rule_tests.py（规则级单测）为准。
+    --format json 输出 validator_version/result/findings[{file,line,level,rule,message}]，
+    规则 ID 稳定可见（R1-R15 纪律类 / M1-M6 MANIFEST 类 / R99 输入类），供 CI 与工具链消费。
 """
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -103,6 +106,71 @@ RTOS_TASK_API_MAP = {
     "xTaskCreate": None,
     "xTaskCreatePinnedToCore": None,
 }
+
+# ---- 规则 ID（消息正则 → 稳定 ID；失配返回 R0 由单测抓住，消息措辞不许随手改）----
+VALIDATOR_VERSION = "1.1.0"
+RULE_TABLE = [
+    (r"ICACHE_RAM_ATTR|loop\(\) 内出现|loop\(\) 有 while|ledcSetup",        "R11"),
+    (r"缺少 IRAM_ATTR",                                                       "R1"),
+    (r"访问了非 volatile",                                                    "R2"),
+    (r"无 FromISR 版本|FromISR API 只能在中断上下文",                        "R3"),
+    (r"必须改用 '",                                                           "R4"),
+    (r"中断内禁止延时|中断内禁止堆操作|内写 NVS|不可在中断内调用"
+     r"|中断内禁调|_CRITICAL",                                                 "R5"),
+    (r"portYIELD_FROM_ISR|portEND_SWITCHING_ISR",                             "R6"),
+    (r"硬件等待循环未见超时",                                                  "R7"),
+    (r"只允许初始化期一次性分配",                                              "R8"),
+    (r"栈深度",                                                               "R9"),
+    (r"未见 nvs_flash_init|未见 nvs_commit",                                   "R10"),
+    (r"legacy 驱动 API",                                                      "R12"),
+    (r"后未 uart_wait_tx_done",                                                "R13"),
+    (r"内阻塞 '",                                                             "R14"),
+    (r"回调路径禁止堆操作",                                                    "R15"),
+    (r"MANIFEST target",                                                      "M1"),
+    (r"上不存在（编号上限|属 flash/USB 专用或受限",                           "M2"),
+    (r"MANIFEST pins 中",                                                     "M3"),
+    (r"但未在 MANIFEST pins 声明",                                            "M4"),
+    (r"被多个文件声明占用",                                                    "M5"),
+    (r"target 冲突",                                                          "M6"),
+    (r"文件不存在|无法读取",                                                  "R99"),
+]
+_RULE_COMPILED = [(re.compile(p), rid) for p, rid in RULE_TABLE]
+
+
+def rule_of(msg):
+    """消息 → 规则 ID。失配返回 R0（消息措辞被改动时单测立刻报警）。"""
+    for rx, rid in _RULE_COMPILED:
+        if rx.search(msg):
+            return rid
+    return "R0"
+
+
+def cross_check(manifests, findings):
+    """跨文件聚合（≥2 个 manifest 才跑）：
+    - M5: 同一 GPIO 被多个文件声明占用（多组件工程的引脚冲突，单文件视角看不到）
+    - M6: target 芯片互相冲突（一个工程只能面向一种目标芯片）"""
+    if len(manifests) < 2:
+        return
+    pin_owner = {}
+    targets = {}
+    for p, mf in manifests.items():
+        name = str(p)
+        for n, _func in mf["pins"]:
+            pin_owner.setdefault(n, set()).add(name)
+        if mf.get("target"):
+            targets.setdefault(mf["target"], set()).add(name)
+    for n in sorted(pin_owner):
+        owners = pin_owner[n]
+        if len(owners) > 1:
+            findings.append(("PROJECT(聚合)", 0, VIOL, "M5",
+                             f"GPIO{n} 被多个文件声明占用 -> "
+                             + "、".join(sorted(owners))
+                             + "：复用引脚必须只在一个模块声明与初始化，其余模块仅引用"))
+    if len(targets) > 1:
+        findings.append(("PROJECT(聚合)", 0, VIOL, "M6",
+                         "MANIFEST target 冲突: " + "、".join(
+                             f"{t}（{'、'.join(sorted(ns))}）" for t, ns in sorted(targets.items()))
+                         + "——同一工程只能面向一种目标芯片"))
 
 # FromISR API（反向：任务上下文禁止）
 FROMISR_API_RE = re.compile(r"\b([A-Za-z_]\w*FromISR)\s*\(")
@@ -282,11 +350,11 @@ def in_spans(pos, spans):
     return any(a <= pos <= b for a, b in spans)
 
 
-def analyze(path, text, findings, irq_owner, project):
+def analyze(path, text, findings, project):
     fname = path.name
 
     def add(line, level, msg):
-        findings.append((fname, line, level, msg))
+        findings.append((fname, line, level, rule_of(msg), msg))
 
     # ---- 函数与全局变量收集 ----
     funcs = []
@@ -678,6 +746,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="ESP32 生成代码工程纪律检查（启发式）")
     ap.add_argument("files", nargs="*", help="要检查的 .c/.ino/.cpp 文件（多文件工程请一起传入）")
     ap.add_argument("--dir", help="递归检查该目录下所有 .c/.ino/.cpp")
+    ap.add_argument("--format", choices=("text", "json"), default="text",
+                    help="text=人读（默认）；json=机器读（规则 ID/行号/级别结构化输出）")
     args = ap.parse_args(argv)
 
     exts = (".c", ".ino", ".cpp")
@@ -715,7 +785,7 @@ def main(argv=None):
                 manifests[p] = mf
             texts[p] = neutralize(raw)
         except OSError as exc:
-            findings.append((str(p), 0, WARN, f"无法读取：{exc}"))
+            findings.append((str(p), 0, WARN, "R99", f"无法读取：{exc}"))
             texts[p] = ""
 
     # 工程级事实：NVS 初始化是否存在于任意被检查文件
@@ -727,22 +797,37 @@ def main(argv=None):
     }
 
     for fname, msg in missing:
-        findings.append((fname, 0, WARN, msg))
-    irq_owner = {}
+        findings.append((fname, 0, WARN, "R99", msg))
     checked = 0
     for p, text in texts.items():
         checked += 1
-        analyze(p, text, findings, irq_owner, project)
+        analyze(p, text, findings, project)
+    cross_check(manifests, findings)
 
-    by_file = {}
-    for f, line, level, msg in findings:
-        by_file.setdefault(f, []).append((line, level, msg))
-    for f in sorted(by_file):
-        print(f"[{f}]")
-        for line, level, msg in sorted(by_file[f]):
-            print(f"  行{line:<5} [{level}] {msg}")
     n_v = sum(1 for x in findings if x[2] == VIOL)
     n_w = sum(1 for x in findings if x[2] == WARN)
+    result = "FAIL" if n_v else ("NOFILES" if checked == 0 else "PASS")
+
+    if args.format == "json":
+        print(json.dumps({
+            "validator_version": VALIDATOR_VERSION,
+            "files_checked": checked,
+            "skipped": skipped,
+            "violations": n_v,
+            "warnings": n_w,
+            "result": result,
+            "findings": [{"file": f, "line": line, "level": level, "rule": rid, "message": msg}
+                         for f, line, level, rid, msg in findings],
+        }, ensure_ascii=False, indent=2))
+        return {"FAIL": 1, "PASS": 0}.get(result, 2)
+
+    by_file = {}
+    for f, line, level, rid, msg in findings:
+        by_file.setdefault(f, []).append((line, level, rid, msg))
+    for f in sorted(by_file):
+        print(f"[{f}]")
+        for line, level, rid, msg in sorted(by_file[f]):
+            print(f"  行{line:<5} [{level}] [{rid}] {msg}")
     print(f"-- 检查文件: {checked}  违规(VIOLATION): {n_v}  警告(WARNING): {n_w} --")
     if skipped:
         print(f"-- 已跳过厂商/产物目录文件: {skipped}（不参与纪律检查）--")
