@@ -1,7 +1,7 @@
 # 症状速查（看到什么报文→先查什么）
 
 > 何时读：拿到错误日志/异常复位现象，先用本文把报文翻译成排查方向，再跳 known-pitfalls.md 对应编号。
-> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–203 全量：基础类见 §8，实战工程类（#36–203，含 MicroPython / Modbus / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机 / Wi-Fi NAT 中继 / IoT 浇水 / IDF 轨摄像头图传 / 力反馈旋钮）见 §9
+> 状态：知识沉淀（未上板实测；API/报文对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档）。症状→编号映射覆盖 #1–215 全量：基础类见 §8，实战工程类（#36–215，含 MicroPython / Modbus / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机 / Wi-Fi NAT 中继 / IoT 浇水 / IDF 轨摄像头图传 / 力反馈旋钮 / 多 App 模拟器掌机）见 §9
 
 ## 1. 排查方法论（三步）
 
@@ -139,7 +139,7 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 
 ## 8. 一页总表·基础类（症状关键词 → 先查 → pitfall 编号，#1–35）
 
-> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9；#125–138 BLE 小程序外设见 §9.9；#139–153 POV 风扇屏见 §9.10；#154–165 ESP32-CAM 双机小车见 §9.11；#166–173 Wi-Fi NAT 中继见 §9.12；#174–187 IoT 浇水控制器见 §9.13；#188–193 IDF 轨摄像头见 §9.14；#194–203 力反馈旋钮见 §9.15。
+> 实战工程类坑位（#36–124：BLE HID / 飞控 / IoT 网关 / 传感器 / 语音 AI / 电机 / 量产 / 教育机器人 / MicroPython / Modbus 主机）见 §9；#125–138 BLE 小程序外设见 §9.9；#139–153 POV 风扇屏见 §9.10；#154–165 ESP32-CAM 双机小车见 §9.11；#166–173 Wi-Fi NAT 中继见 §9.12；#174–187 IoT 浇水控制器见 §9.13；#188–193 IDF 轨摄像头见 §9.14；#194–203 力反馈旋钮见 §9.15；#204–215 掌机/多 App 模拟器见 §9.16。
 
 | 症状关键词 | 先查 | pitfall |
 |---|---|---|
@@ -420,3 +420,20 @@ A fatal error occurred: Failed to connect to ESP32-C3: No serial data received.
 | 开 LVGL 后堆不够 | 双缓冲 57.6KB 内部 RAM | 201 |
 | 快速甩旋钮手感断崖 | 60 rad/s 速度守护硬切 | 202 |
 | 触感档位与页面绑定错乱 | 魔法数字 update_motor_config | 203 |
+
+### 9.16 掌机/多 App 模拟器（204–215，源：retrogo-s3-handheld）
+
+| 症状 | 先查 | # |
+|---|---|---|
+| 按 ILI9341 时序调 ST7789 参数全错 | 驱动宏名与实屏不符 | 204 |
+| 改旋转设置不生效/缩放被重置 | set_rotation 写错 NVS 键 | 205 |
+| R 键偶发触发 OPTION | 两键共 GPIO41 | 206 |
+| I2C 手柄失灵整机无反应 | 读失败静默返回无键 | 207 |
+| S3 SDMMC 起不来/神秘固定脚 | GPIO 矩阵引脚未显式配 | 208 |
+| SD 挂载偶发失败不重试 | 降速重试错误码白名单 | 209 |
+| 无 PSRAM 弹窗后照崩 | lowMemoryMode 仍继续跑 | 210 |
+| 超频后随机死机/USB 掉线 | BBPLL 裸寄存器未文档化 | 211 |
+| 更新器可被投恶意固件 | TLS 跳过证书校验+WebUI 无认证 | 212 |
+| 崩溃后重启卡死坏 app | OTA 切换无回退计数 | 213 |
+| 组件搬进 IDF 5.3 编不过 | i2s/i2c/dac 全家 legacy | 214 |
+| 调 dma_buf_len 越调杂音越规律 | 单位是样本不是字节 | 215 |

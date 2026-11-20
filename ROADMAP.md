@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob）十六份文档与坑清单 #36–81、#94–203，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob） / 多 App 模拟器掌机（retro-go on ESP32-S3）十七份文档与坑清单 #36–81、#94–215，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -221,3 +221,11 @@
 | 供应链钉版 | 三 workflow 六处 uses 全钉 commit SHA（**arduino/setup-arduino-cli 的 @v2 实为浮动分支**，API 实证 refs/heads/v2；已钉 v2.1.0 提交 b3cda96）；.gitattributes 统一行尾（CRLF rebase 冲突根治） | 待 CI 首跑验证（本提交） |
 | evals 静态测试 | 四份任务书（Wi-Fi 重连+NVS / BLE HID / 低功耗传感器 / RS-485 主机轮询）+ README 运行说明；不引在线服务 | 静态交付，首次评测后回写结果 |
 | 版本化 | SKILL.md frontmatter `version: 1.1.0`；CHANGELOG.md（1.0.0=2026-11-11 发行 / 1.1.0=本轮） | README 供应链行同步 |
+
+## 已沉淀（第二十一轮：多 App 模拟器掌机 retro-go on ESP32-S3）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| retrogo-s3-handheld.md（第 30 份） | retro-go 1.41 ESP32-S3 双目标转写：OTA 分区多 App 切换/RG_BOOT_ONCE 回 launcher；SPI 脏行显示管线（DMA 池+逐行 checksum+缩放查表+双轴 blend 滤波）；ST7789V 三层初始化（通用序列+目标板调谐宏）；I2S 外部 DAC（use_apll 仅经典）与内部 DAC 差分单声道；I2C 0x20 扩展手柄；S3 SDMMC 1-bit GPIO 矩阵；rg_alloc 内存分区；BBPLL ROM 寄存器超频实证 | 源码逐行精读（上游已上板），转写未二次复测 |
+| 坑 204–215（掌机/多 App 模拟器类） | 12 条：驱动宏名与实屏不符/set_rotation 写错 NVS 键/OPTION 与 R 共脚/I2C 手柄静默失败/S3 SDMMC 引脚矩阵/重试错误码白名单/无 PSRAM 强行跑/BBPLL 裸寄存器/TLS 跳校验/OTA 无回退计数/legacy 驱动全家/dma_buf_len 单位 | 源码证据齐全，未复测 |
+| 收口 | SKILL（描述+路由+导航表+实测声明 17 份+#94–215+资源表+触发词 掌机/模拟器/ST7789 等）/README（十七份/215 条/30 份/能力行/details）/quickref §9.16（12 行）/ROADMAP 本表 | ci_check 全绿 |

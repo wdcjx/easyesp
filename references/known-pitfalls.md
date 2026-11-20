@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–203 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏、ESP32-CAM 双机小车、Wi-Fi NAT 中继路由、IoT 浇水控制器、ESP-IDF 摄像头图传与力反馈旋钮）。API/报文对齐 ESP-IDF 5.5.x / arduino-esp32 4.1.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–215 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏、ESP32-CAM 双机小车、Wi-Fi NAT 中继路由、IoT 浇水控制器、ESP-IDF 摄像头图传、力反馈旋钮与多 App 模拟器掌机）。API/报文对齐 ESP-IDF 5.5.x / arduino-esp32 4.1.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -361,5 +361,24 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 201 | 开 LVGL 后堆不够、WiFi/BLE 初始化失败 | 240×240 双缓冲各 28.8KB，共 57.6KB 内部 DMA RAM；再加 WiFi+BLE 栈就紧 | 单缓冲+局部刷新；或降色深/分块；必要时 PSRAM（需 DMA 能力） |
 | 202 | 快速甩旋钮时突然「吸住」再松开，手感断崖 | 速度守护阈值 `60 rad/s` 对本电机过低，超过即 `move(0)` 硬切 | 按电机 KV/减速比实测上调阈值；或改线性衰减而非硬切 |
 | 203 | 触感档位与页面绑定关系错乱，改一处牵连一片 | 页面里用魔法数字直接 `update_motor_config(1/2/4)`，与 KnobConfig 数组下标隐式耦合 | 定义具名枚举（HAPTIC_RATCHET/FINE/…）；配置表按名查找 |
+
+## 掌机/多 App 模拟器类（204–215）
+
+源自 retro-go 1.41（ducalex，GPL-2.0，IDF 4.2–5.2）ESP32-S3 双目标副本（esplay-s3 完整板级/esp32s3-devkit-c 最小板级）源码精读；上游已上板，转写未二次复测。详见 [retrogo-s3-handheld.md](retrogo-s3-handheld.md)。
+
+| # | 症状 | 根因 | 修法 |
+|---|------|------|------|
+| 204 | 【显示】按 ILI9341 时序调 ST7789V 屏，参数怎么都不对/颜色反 | `RG_SCREEN_DRIVER 0` 宏名与整套 `ILI9341_CMD` 宏沿用 ILI9341 命名，实际序列按 ST7789 语义写（0x21 反色、0x3A=0x55、借自 jobitjoseph/retro-go-ST7789）——驱动名与实屏不符，读者按 ILI9341 手册对表必错 | 命名与实屏一致（宏/注释/commit）；ST7789 与 ILI9341 命令地址大量重叠但语义有差，以实屏手册为准 |
+| 205 | 【设置】改了「屏幕旋转」设置，重启后旋转没生效、缩放却被重置 | `rg_display_set_rotation` 复制粘贴自 set_scaling：NVS 写的是 `SETTING_SCALING` 键（加载却读 SETTING_ROTATION），rotation 永不持久化还毁 scaling | setter 的键名与 getter 一一核对；复制粘贴生成的 setter 必须 review 键常量 |
+| 206 | 【输入】按 R 键偶发同时触发 OPTION；手柄行为对不上键位表 | 目标板 `RG_GAMEPAD_GPIO_MAP` 里 OPTION 与 R 都配 GPIO_NUM_41——一脚双键靠组合键语义共存 | 一脚多功能要在键位表注释显式声明；不能共存就改脚或删冗余键位 |
+| 207 | 【输入】I2C 扩展手柄（排线松/芯片挂）后整机「没反应」，无任何报错 | `rg_i2c_read(0x20,...)` 失败分支=当帧无键静默返回，不上抛、不计数、无 LED 告警；组合键救不了（也没键可组合） | 输入子系统健康度可观测：连续 N 帧读失败要日志+指示；启动期首读失败应阻止进入游戏 |
+| 208 | 【存储】S3 上 SDMMC 1-bit 初始化失败或用到神秘固定脚 | S3 `SOC_SDMMC_USE_GPIO_MATRIX`：SDMMC 引脚走 GPIO 矩阵可任意分配（不同于经典 ESP32 固定 IO_MUX），但 d1/d3 须显式 -1，否则 slot 配置残留默认脚 | S3 用 sdmmc_slot_config_t 显式填全部引脚；1-bit 模式 d1/d3=-1；CMD/CLK/D0 逐脚核对 |
+| 209 | 【存储】SD 挂载偶发失败，只有特定错误码会自动重试 | 降速重试白名单只有 TIMEOUT/INVALID_RESPONSE/INVALID_CRC 三类，其余错误（如 INVALID_ARG、无卡）直接判失败不重试 | 按需求扩展重试错误集；无卡与配置错误确实不该重试，但要有可区分的错误上报 |
+| 210 | 【内存】无 PSRAM 模组跑模拟器：弹窗警告后照样崩 | `lowMemoryMode` 只弹「External memory not detected…will surely crash」然后**继续 boot**——帧缓冲必然放不进内部 RAM，崩溃只是时间问题 | 无 PSRAM 即降级功能（无边界图/降分辨率/拒进大核心），或干脆拒绝启动；「警告后继续」是给人看的不是给系统兜底 |
+| 211 | 【超频】菜单开 overclock 后设备随机死机/USB 掉线，且无官方文档可查 | `rg_system_set_overclock` 直写 BBPLL ROM I2C 寄存器（rom_i2c_writeReg 0x66，480M 档 div=(level+4)*8，level -4..+3），代码自注「None of this is documented by espressif」 | 未文档化寄存器操作属风险自担：保留基准值快照+level 0 恢复路径（本工程做法）；产品固件不放用户菜单 |
+| 212 | 【安全】Web 文件管理器/更新器对任意 HTTPS 源放行，可被中间人投固件 | `CONFIG_ESP_TLS_INSECURE=y` + `ESP_TLS_SKIP_SERVER_CERT_VERIFY=y`（注释自嘲「不想管 CA」）+ WebUI 无认证 | 下载固件走带证书校验的 HTTPS 或内置 fingerprint pinning；WebUI 加 token；「固件被投=整机被控」是最高危面 |
+| 213 | 【架构】模拟器崩溃后重启进不了 launcher，卡死在坏 app | 多 App 切换靠 NVS boot args + `esp_ota_set_boot_partition`；若写完 NVS 未及 commit 或分区表被改坏，重启仍进坏分区循环 | 切换前先 `rg_settings_commit()`；bootloader 层加「连续 N 次启动失败回退 factory/launcher」逻辑（本工程靠 RG_BOOT_ONCE 只覆盖正常路径） |
+| 214 | 【迁移】把本工程组件搬进 IDF 5.3 工程：i2s/i2c/dac 全部弃用告警或编不过 | 全库用 legacy 驱动：driver/i2s.h（i2s_driver_install/set_pin/write）、i2c_param_config/i2c_driver_install、内部 DAC 差分输出（经典 ESP32 专属，S3/C3 无此外设直接 #error） | 抄架构不抄 API：显示 SPI 队列/脏行思路可平移；音频迁 i2s_std.h、I2C 迁 i2c_master.h（本 skill 对应配方文档）；内部 DAC 方案仅经典 ESP32 可用 |
+| 215 | 【音频】按注释把 dma_buf_len 当字节数调整，结果欠载杂音规律性出现 | legacy i2s `dma_buf_len` 单位是**每缓冲样本数**（立体声=4 字节/样本）：4×180=720 样本≈16ms@44.1k；总水位目标 ~800 样本是注释写明的调优锚点 | 调整先算总水位（count×len×sampleTime）再动参数；数字音频缓冲区余量按 ms 预算，不按字节数 |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。
