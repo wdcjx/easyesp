@@ -1,6 +1,6 @@
 # ROADMAP — easyesp 沉淀进度
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob） / 多 App 模拟器掌机（retro-go on ESP32-S3）十七份文档与坑清单 #36–81、#94–215，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob） / 多 App 模拟器掌机（retro-go on ESP32-S3） / 量产烧录分发包（ESP32-C3 无线音频收发器）十八份文档与坑清单 #36–81、#94–223，源自已上板运行的源工程，转写未二次复测）。
 
 ## 已沉淀（本轮，全部文档对齐官方文档、未上板实测）
 
@@ -229,3 +229,11 @@
 | retrogo-s3-handheld.md（第 30 份） | retro-go 1.41 ESP32-S3 双目标转写：OTA 分区多 App 切换/RG_BOOT_ONCE 回 launcher；SPI 脏行显示管线（DMA 池+逐行 checksum+缩放查表+双轴 blend 滤波）；ST7789V 三层初始化（通用序列+目标板调谐宏）；I2S 外部 DAC（use_apll 仅经典）与内部 DAC 差分单声道；I2C 0x20 扩展手柄；S3 SDMMC 1-bit GPIO 矩阵；rg_alloc 内存分区；BBPLL ROM 寄存器超频实证 | 源码逐行精读（上游已上板），转写未二次复测 |
 | 坑 204–215（掌机/多 App 模拟器类） | 12 条：驱动宏名与实屏不符/set_rotation 写错 NVS 键/OPTION 与 R 共脚/I2C 手柄静默失败/S3 SDMMC 引脚矩阵/重试错误码白名单/无 PSRAM 强行跑/BBPLL 裸寄存器/TLS 跳校验/OTA 无回退计数/legacy 驱动全家/dma_buf_len 单位 | 源码证据齐全，未复测 |
 | 收口 | SKILL（描述+路由+导航表+实测声明 17 份+#94–215+资源表+触发词 掌机/模拟器/ST7789 等）/README（十七份/215 条/30 份/能力行/details）/quickref §9.16（12 行）/ROADMAP 本表 | ci_check 全绿 |
+
+## 已沉淀（第二十二轮：量产烧录分发包——C3 无线音频收发器）
+
+| 产物 | 说明 | 验证状态 |
+|---|---|---|
+| production-flash-pack.md（第 31 份） | 量产烧录分发包解剖（二进制验尸+教程转写+FDT 配置实证）：合并全镜像布局（0x0 bootloader/0x8000 分区表/0xe000 otadata/0x10000 app+esp_app_desc 读出版本链 v4.4.2-dirty）；量产最小分区表（nvs+phy_init+factory 1MB 无 OTA）；**C3 GPIO11=VDD_SPI 的 eFuse 解锁**（VDD_SPI_AS_GPIO 1，不可逆，功放 LDO 场景）；FDT 3.9.3 量产事实（8 串口批烧/EFUSE CHECK 停线/keep 语义/JEDEC id 对号 W25Q32=W25Q64）；产线 SOP 模板（DTR+RTS 笔误实证/电池板保持供电排针/负极排针接地）；三份真实烧录日志（两 MAC 两片型） | bin 逐字节验尸+docx 转写，未上板复测 |
+| 坑 216–223（量产烧录/分发类） | 8 条：GPIO11 VDD_SPI 职责/efuse 不可逆三查/合并镜像与 FDT keep 语义/DTR-DTS 笔误/最小分区无升级通道/FDT 日志审计/电池设备供电保持/波特率产线取舍 | 源包证据齐全，未复测 |
+| 收口 | SKILL（描述+量产烧录分发域+31 份/223 条+触发词 烧录工具/FDT/efuse/VDD_SPI/GPIO11+路由+导航表+资源表）/README（十八份/223 条/31 份/能力行/details）/quickref §9.17（8 行）/ROADMAP 本表 | ci_check 全绿 |

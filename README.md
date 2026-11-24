@@ -11,7 +11,7 @@
 面向 AI agent 的 ESP32 固件开发知识技能：**双轨框架**（ESP-IDF 5.3.x 主轨 + Arduino arduino-esp32 3.x 副轨）、**三芯片覆盖**（经典 ESP32 / ESP32-S3 / ESP32-C3），带工程纪律检查器与沉淀机制。
 对标同作者的 STM32 技能（[embed](https://github.com/wdcjx/Embedded-programming)），把"能生成代码"升级为"能按老手纪律生成代码并静态自检"。版本化发布：[CHANGELOG](CHANGELOG.md) · [Releases](https://github.com/wdcjx/easyesp/releases)；已安装的技能可让 agent 一句「更新 easyesp 技能」完成升级（见[安装](#安装)节）。
 
-> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob） / 多 App 模拟器掌机（retro-go on ESP32-S3）十七份文档与坑清单 #36–81、#94–215，源自已上板运行的源工程，转写未二次复测）。
+> 状态：文档对齐沉淀（未上板实测；API 对齐 ESP-IDF 5.3.x / arduino-esp32 3.x 官方文档；含《ESP32 软件开发避坑手册（量产级）》文档沉淀）**＋** 实战工程沉淀（BLE HID / 实时控制 / IoT 网关 / 语音 AI 助手（xiaozhi） / MAX30102 心率血氧 / 电机控制与 CAN（FOC 轮腿） / Mind+ 教育机器人（瑞龙 ESP32-E） / MicroPython 商用环境控制器（env-controller） / RS-485 Modbus RTU 主机（tiny485-mbrtu） / BLE+微信小程序外设（cw_esp32_ble_weapp） / POV 裸眼 3D 风扇屏（3-d-bare-eye-fan-screen） / ESP32-CAM 双机智能小车（stm32-car-project） / Wi-Fi NAT 中继路由（esp32s3-wifi-relay） / IoT 浇水控制器（esp32-watering） / ESP-IDF 摄像头图传（esp-idf-camera） / 力反馈旋钮（super_knob） / 多 App 模拟器掌机（retro-go on ESP32-S3） / 量产烧录分发包（ESP32-C3 无线音频收发器）十八份文档与坑清单 #36–81、#94–223，源自已上板运行的源工程，转写未二次复测）。
 > 每次生成都应声明"未经编译与上板验证"，并给出验证路径（idf.py build → flash → monitor）。
 
 ## 能力列表
@@ -47,6 +47,7 @@
 | IDF 轨摄像头图传 | esp32-camera 组件与 Kconfig / camera_config_t 全字段 / esp-wifi-connect 网页配网 / 真 MJPEG 三段式 chunk + 自适应 JPEG 质量 |
 | 力反馈旋钮与圆屏 | SimpleFOC 触感算法（卡位/死区/出界/怠速修正/速度守护）/ 5 档触感预设 / LVGL GC9A01 圆屏 + 编码器环形菜单 / BLE 媒体键 |
 | 多 App 模拟器掌机 | OTA 分区多应用切换（launcher+模拟器互跳）/ SPI 屏脏行显示管线（DMA 池+checksum+缩放滤波）/ I2S 外部 DAC / I2C 扩展手柄 / SDMMC 1-bit / ST7789V 三层初始化 |
+| 量产烧录分发 | 合并全镜像布局与最小分区表 / Flash Download Tool 批烧与日志审计 / C3 GPIO11 VDD_SPI eFuse 解锁 / 产线 SOP 模板 |
 | 低功耗 | 深睡三档 / 唤醒源 / RTC 内存 / gpio_hold |
 
 **质量与排障**
@@ -57,7 +58,7 @@
 | 真实编译 CI | `build.yml`：`espressif/idf:v5.3.1` 容器对示例做 idf.py build（esp32/S3/C3 三目标）+ arduino-cli 1.5.1（core 3.3.12 锁版本）三块板编译；月度 cron 检测上游漂移 |
 | 供应链钉版 | 三个 workflow 的 actions 全部钉 commit SHA（arduino/setup-arduino-cli 的 `@v2` 实为浮动分支，已钉 v2.1.0 提交）；`.gitattributes` 统一行尾；版本见 `CHANGELOG.md` |
 | 引脚声明清单 | 工程主文件头部 `/* === EASYESP MANIFEST V1 === */` 声明块（target/pins），检查器核对声明与代码一致：芯片引脚存在性 / 一脚一功能 / 实际用脚全入表 |
-| 215 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 / MicroPython 商用工程 / Modbus 主机 / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机小车 / Wi-Fi NAT 中继 / IoT 浇水 / 摄像头 IDF 轨 / 力反馈旋钮 / 多 App 模拟器掌机 |
+| 223 条坑清单 | 症状→根因→修法 三列表格：供电 / strapping / 并发 / 网络 / 实战项目 / 传感器 / 语音 AI / 电机控制 / 量产手册 / 教育机器人 / MicroPython 商用工程 / Modbus 主机 / BLE 小程序外设 / POV 风扇屏 / ESP32-CAM 双机小车 / Wi-Fi NAT 中继 / IoT 浇水 / 摄像头 IDF 轨 / 力反馈旋钮 / 多 App 模拟器掌机 / 量产烧录分发 |
 | 症状速查 | Guru Meditation 转储 / 看门狗 / 复位原因 / WiFi 断连码 → 三步定位法 |
 | 量产就绪 | 内存泄漏与碎片 / 栈水位 / 弱网限流 / OTA 量产铁律 / 量产前 12 项检查清单 |
 
@@ -66,7 +67,7 @@
 | 路径 | 内容 |
 |---|---|
 | `SKILL.md` | 技能主文件：模式路由、六步工作流、11 条硬约束、自检清单、资源表（agent 的入口） |
-| `references/` | 30 份知识文档（逐份清单见下方） |
+| `references/` | 31 份知识文档（逐份清单见下方） |
 | `templates/` | `main_idf.c`（IDF 骨架，含 EASYESP MANIFEST V1 引脚声明块）、`main_arduino.ino`（Arduino 骨架）、`sdkconfig.defaults`（配置基线） |
 | `scripts/validate_esp_generated.py` | 纪律检查器：IRAM_ATTR/FromISR/临界区方向/栈字节/NVS-before-WiFi/BLE API 入 ISR/BLE 回调阻塞/Arduino loop/MANIFEST 引脚声明核对等规则，`VIOLATION` 清零才交付；纯 Python 标准库，无第三方依赖 |
 | `scripts/ci_check.py` | CI 回归：validator 十二样本 + 跨文件 manifest 三目录基线 + 规则级单测（run_rule_tests.py）+ 资源表/坑编号/文档计数一致性检查 |
@@ -80,7 +81,7 @@
 | `CONTRIBUTING.md` | 贡献指南：文档规范、validator 纪律、沉淀流程 |
 
 <details>
-<summary><b>references/ 全部 30 份文档</b>（点开清单）</summary>
+<summary><b>references/ 全部 31 份文档</b>（点开清单）</summary>
 
 | 文档 | 内容 |
 |---|---|
@@ -110,10 +111,11 @@
 | `idf-camera-mjpeg.md` | IDF 轨摄像头图传（esp-idf-camera 转写）：组件与 Kconfig 表/camera_config_t 字段/esp-wifi-connect 配网/MJPEG 自适应质量/启停生命周期 |
 | `lvgl-knob-haptics.md` | 力反馈旋钮与 LVGL 圆屏（super_knob 转写）：SimpleFOC 触感算法/5 档预设/任务并发纪律/GC9A01 端口/环形菜单 |
 | `retrogo-s3-handheld.md` | 多 App 模拟器掌机（retro-go ESP32-S3 转写）：OTA 分区多 App 切换/SPI 脏行显示管线/I2S 外部 DAC/SDMMC 1-bit/ST7789V 初始化/BBPLL 超频 |
+| `production-flash-pack.md` | 量产烧录分发包（ESP32-C3 实例转写）：合并镜像布局/C3 GPIO11 VDD_SPI eFuse 解锁/FDT 批烧与日志审计/产线 SOP |
 | `production-readiness.md` | 量产工程纪律：内存泄漏与碎片/栈水位/弱网限流/OTA 铁律/低功耗分层/量产前检查清单 |
 | `power-and-sleep.md` | 低功耗：深睡范式/唤醒源/RTC 内存/gpio_hold |
-| `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位；症状→坑编号全量映射 #1–215 |
-| `known-pitfalls.md` | 215 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人/MicroPython 商用工程/Modbus 主机/BLE 小程序外设/POV 风扇屏/ESP32-CAM 双机小车/Wi-Fi NAT 中继/IoT 浇水/摄像头 IDF 轨/力反馈旋钮/多 App 模拟器掌机，症状→根因→修法 |
+| `symptom-quickref.md` | 症状速查：Guru Meditation/WDT/复位原因/连接错误码 → 三步定位；症状→坑编号全量映射 #1–223 |
+| `known-pitfalls.md` | 223 条坑清单：供电/strapping/并发/网络/实战项目/传感器/语音 AI/电机控制/量产手册/教育机器人/MicroPython 商用工程/Modbus 主机/BLE 小程序外设/POV 风扇屏/ESP32-CAM 双机小车/Wi-Fi NAT 中继/IoT 浇水/摄像头 IDF 轨/力反馈旋钮/多 App 模拟器掌机/量产烧录分发，症状→根因→修法 |
 
 </details>
 

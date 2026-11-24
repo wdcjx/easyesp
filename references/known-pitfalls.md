@@ -1,7 +1,7 @@
 # 已知坑清单（种子版，按使用逐步实测补充）
 
 > 何时读：编译/烧录/运行出现任何异常症状，按关键词先来本表对号入座；报文→编号映射见 symptom-quickref.md。
-> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–215 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏、ESP32-CAM 双机小车、Wi-Fi NAT 中继路由、IoT 浇水控制器、ESP-IDF 摄像头图传、力反馈旋钮与多 App 模拟器掌机）。API/报文对齐 ESP-IDF 5.5.x / arduino-esp32 4.1.x 官方文档）
+> 状态：知识沉淀（#1–35 对齐官方文档、#82–93 源自用户提供的《ESP32 软件开发避坑手册（量产级）》文档，均未上板实测；**#36–81、#94–223 源自已上板工程**（用户提供的真实硬件运行项目，含 MicroPython 商用工程、Modbus 主机库、BLE 小程序外设、POV 风扇屏、ESP32-CAM 双机小车、Wi-Fi NAT 中继路由、IoT 浇水控制器、ESP-IDF 摄像头图传、力反馈旋钮、多 App 模拟器掌机与量产烧录分发包）。API/报文对齐 ESP-IDF 5.5.x / arduino-esp32 4.1.x 官方文档）
 
 条目格式：`编号. 症状 | 根因 | 修法`（表格呈现）。编号稳定，实测补充只追加不改号。
 
@@ -380,5 +380,20 @@ void i2c_bus_recover(gpio_num_t scl, gpio_num_t sda) {
 | 213 | 【架构】模拟器崩溃后重启进不了 launcher，卡死在坏 app | 多 App 切换靠 NVS boot args + `esp_ota_set_boot_partition`；若写完 NVS 未及 commit 或分区表被改坏，重启仍进坏分区循环 | 切换前先 `rg_settings_commit()`；bootloader 层加「连续 N 次启动失败回退 factory/launcher」逻辑（本工程靠 RG_BOOT_ONCE 只覆盖正常路径） |
 | 214 | 【迁移】把本工程组件搬进 IDF 5.3 工程：i2s/i2c/dac 全部弃用告警或编不过 | 全库用 legacy 驱动：driver/i2s.h（i2s_driver_install/set_pin/write）、i2c_param_config/i2c_driver_install、内部 DAC 差分输出（经典 ESP32 专属，S3/C3 无此外设直接 #error） | 抄架构不抄 API：显示 SPI 队列/脏行思路可平移；音频迁 i2s_std.h、I2C 迁 i2c_master.h（本 skill 对应配方文档）；内部 DAC 方案仅经典 ESP32 可用 |
 | 215 | 【音频】按注释把 dma_buf_len 当字节数调整，结果欠载杂音规律性出现 | legacy i2s `dma_buf_len` 单位是**每缓冲样本数**（立体声=4 字节/样本）：4×180=720 样本≈16ms@44.1k；总水位目标 ~800 样本是注释写明的调优锚点 | 调整先算总水位（count×len×sampleTime）再动参数；数字音频缓冲区余量按 ms 预算，不按字节数 |
+
+## 量产烧录/分发类（216–223）
+
+源自「固件、烧录工具、操作教程」ESP32-C3 无线音频收发器量产分发包（WiFiScan v1.0，固件 2023-05-17 / IDF 4.4.2-dirty 时代，含三份真实烧录日志与操作教程 docx）；bin 逐字节验尸，转写未上板复测。详见 [production-flash-pack.md](production-flash-pack.md)。
+
+| # | 症状 | 根因 | 修法 |
+|---|------|------|------|
+| 216 | 【C3】GPIO11 当 IO 用：输出恒 3.3V / 拉不高拉不低 / 外设电源被顶 | ESP32-C3 复位默认 GPIO11=VDD_SPI 电源输出脚（给 SPI flash 供电），不是普通 IO；板上 flash 另有供电时该脚仍占着电源职责 | `espefuse.py -p COMx burn_efuse VDD_SPI_AS_GPIO 1` 永久释放为普通 IO（先确认板上 flash 不靠 GPIO11 供电，否则解锁=变砖） |
+| 217 | 【efuse】犹豫不敢烧 / 烧错想恢复 | VDD_SPI_AS_GPIO 是 eFuse 一次性熔丝，不可逆、无恢复路径；教程敢写因为它先验证了硬件供电拓扑 | 烧前三查：原理图 flash 供电路径、样机验证、命令逐字对官方 espefuse 文档；产线把 efuse 检查交给 FDT 的 EFUSE CHECK 停线机制 |
+| 218 | 【烧录】同一镜像 FDT 选 QIO/80M 与镜像头 DIO 不一致，不知谁生效 | 合并镜像 0x0 头部自带 spi_mode/speed（E9 后第 2/3 字节）；FDT 的 flash_freq/mode 配 `keep` 时跟镜像头，选了具体值则是工具层覆盖 | 发分包时写死口径（本包教程=让选 80MHz/QIO）；验尸用 esptool image_info 读头，两处不一致以实际下发为准 |
+| 219 | 【文档】照教程接「DTR、DTS」复位不管用 | 教程笔误：自动复位电路需要 DTR+**RTS** 两根（DTS 不存在于 USB-TTL 信号集）；操作员逐字照抄接线即失败 | 编写 SOP 时信号名过一遍数据手册；「给机器看的字段人类照抄」=文档笔误传染（同 #155 家族） |
+| 220 | 【分区】量产镜像用默认 Arduino 分区表，app 逼近上限且无升级通道 | 出厂最小分区（本包实证：nvs 0x9000/0x6000 + phy_init + factory 1MB，无 OTA 无 spiffs）省空间但**没有 OTA 上升空间，升级只能现场重烧** | 无网络产品可用最小表；有任何升级诉求必须留 ota_0/ota_1（参照 production-readiness §OTA 铁律反向适用） |
+| 221 | 【审计】产线烧了什么片、哪块板，事后说不清 | FDT 每次烧录自动写 logs/&lt;MAC&gt;.txt：含芯片 MAC、flash JEDEC id（0xEF4016=W25Q32/4MB、0xEF4017=W25Q64/8MB）、字节数/耗时/校验结果 | 把日志文件名当 SN 归档；JEDEC id 对号=免费 BOM 审计（防供应商换片不报） |
+| 222 | 【烧录】带电源按键的电池设备烧到一半断电、反复失败 | 设备靠按键维持供电，烧录 30s 内按键状态不稳；本板须用排针帽短接「开机按钮旁两排针」保持通电 | 电池产品预留烧录供电跳线/排针；SOP 把「保持供电」写成烧录前置步骤而非备注 |
+| 223 | 【产线】想提波特率上 921600 提速，结果批量失败率上升 | 量产夹具/杜邦线/接地质量决定波特率上限；本包锁 115200（552KB 压缩后 27.8s，有效 158.6kbit/s）是产线稳定优先 | 首件验证波特率阶梯（115200→460800→921600）取良率 100% 的档；宁可慢 20 秒不返工 |
 
 使用约定：新坑追加编号＋症状原文，标注「未实测/已实测」；实测后把「以官方文档为准」替换为实测值。
